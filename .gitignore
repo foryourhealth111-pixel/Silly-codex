@@ -39,3 +39,10 @@ build/
 **/exports/
 **/config.local.json
 *.log
+
+# Local README capture scratch and raw screenshots
+docs/assets/visual-runtime*/
+docs/assets/instruction-switcher-running.png
+docs/assets/instruction-switcher-light.jpg
+docs/assets/instruction-switcher-light.png
+docs/assets/instruction-switcher-bubble.jpg

@@ -1,6 +1,12 @@
 # Instruction Switcher
 
-一个零 npm 依赖的个人 Codex 插件。它通过 `UserPromptSubmit` Hook 为每个任务保存独立的指令选择，并提供自动出现的 Windows 桌面伴随窗。
+> 把每个 Codex 任务的工作方式变成可见、可切换、可恢复的本地控制。
+
+它通过 `SessionStart` 与 `UserPromptSubmit` Hook 为每个任务保存独立的指令选择，并提供自动出现的 Windows 桌面伴随窗。
+
+![Instruction Switcher 伴随窗](../../docs/assets/instruction-switcher-panel-dark.png)
+
+完整的产品介绍、运行示意、设计意义和安装路线见仓库根目录的 [Silly-codex README](../../README.md)。
 
 发布仓库：[foryourhealth111-pixel/Silly-codex](https://github.com/foryourhealth111-pixel/Silly-codex)。插件版本以 `.codex-plugin/plugin.json` 为准，当前版本为 `0.1.0`。
 
