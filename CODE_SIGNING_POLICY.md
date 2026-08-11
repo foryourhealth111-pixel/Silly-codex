@@ -4,6 +4,8 @@ Silly-codex uses Authenticode signing for the Windows companion executable. The 
 
 Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
 
+申请入口：[SignPath Foundation application](https://signpath.org/apply)。当前仓库已公开并使用 Apache-2.0；正式 `v0.1.0` Release 会在申请审核和签名配置完成后创建。
+
 ## Team roles
 
 - Committer and reviewer: [foryourhealth111-pixel](https://github.com/foryourhealth111-pixel)

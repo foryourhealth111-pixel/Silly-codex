@@ -7,7 +7,7 @@ Silly-codex 是一个面向 Codex 的开源插件仓库。当前仓库提供 `in
 先安装 Node.js LTS，并确认 `node` 命令位于 PATH。然后在 PowerShell 中执行：
 
 ```powershell
-codex plugin marketplace add foryourhealth111-pixel/Silly-codex --ref v0.1.0
+codex plugin marketplace add foryourhealth111-pixel/Silly-codex --ref main
 codex plugin add instruction-switcher@silly-codex
 ```
 
@@ -20,6 +20,8 @@ codex plugin remove instruction-switcher@personal
 ```
 
 该操作移除旧插件缓存和安装登记，`%CODEX_HOME%\instruction-switcher` 中的用户数据会保留。
+
+当前公开主线使用 `main` 作为安装 ref。SignPath Foundation 审核完成并创建正式版本后，可将 ref 替换为 `v0.1.0`。
 
 升级：
 
