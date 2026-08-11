@@ -23,3 +23,5 @@ jobs:
           node-version: "22"
       - name: Run Node tests
         run: node --test plugins/instruction-switcher/tests/*.test.mjs
+      - name: Validate npm installer package
+        run: npm pack --dry-run --json

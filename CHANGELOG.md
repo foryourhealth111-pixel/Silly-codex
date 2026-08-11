@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add a zero-dependency npm/npx installer for the GitHub marketplace.
+- Keep replacement of an existing `instruction-switcher@personal` installation explicit.
+
 ## [0.1.0] - 2026-08-11
 
 - 发布 `instruction-switcher` 的 Hook + Windows 伴随窗核心版本。

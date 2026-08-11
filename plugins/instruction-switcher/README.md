@@ -8,6 +8,20 @@
 
 在安装前确认 Windows 主机可以调用 Node.js 22 或兼容的 Node.js LTS。伴随窗面向 Windows；Hook 由 Codex 调用。
 
+从 GitHub 通过 npm 自带的 `npx` 一条命令安装：
+
+```powershell
+npx --yes github:foryourhealth111-pixel/Silly-codex
+```
+
+系统已有旧的 `instruction-switcher@personal` 时，请先完全退出 Codex，再运行：
+
+```powershell
+npx --yes github:foryourhealth111-pixel/Silly-codex --replace-personal
+```
+
+安装器没有第三方依赖或 npm 生命周期脚本，只调用下面的 Codex 官方 CLI 命令。手工安装方式继续保留：
+
 ```powershell
 codex plugin marketplace add foryourhealth111-pixel/Silly-codex --ref main
 codex plugin add instruction-switcher@silly-codex
@@ -15,7 +29,7 @@ codex plugin add instruction-switcher@silly-codex
 
 安装后，在 Codex 的插件设置中审核并信任 `SessionStart` 与 `UserPromptSubmit` 两个 Hook。重新启动 Codex 或新建任务后，伴随窗会自动出现。
 
-如果系统已有旧的 `instruction-switcher@personal` 安装，请先完全退出 Codex，再执行：
+使用手工方式迁移旧的 `instruction-switcher@personal` 安装时，请先完全退出 Codex，再执行：
 
 ```powershell
 codex plugin remove instruction-switcher@personal

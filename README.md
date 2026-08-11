@@ -6,6 +6,29 @@ Silly-codex 是一个面向 Codex 的开源插件仓库。当前仓库提供 `in
 
 先安装 Node.js LTS，并确认 `node` 命令位于 PATH。然后在 PowerShell 中执行：
 
+使用 npm 自带的 `npx` 一条命令安装：
+
+```powershell
+npx --yes github:foryourhealth111-pixel/Silly-codex
+```
+
+该命令下载 GitHub 仓库中的零依赖安装器。安装器只调用 Codex 官方 CLI，依次登记 `silly-codex` marketplace 并安装 `instruction-switcher`，没有 `postinstall` 等 npm 生命周期脚本。
+
+系统已有旧的 `instruction-switcher@personal` 时，请先完全退出 Codex，再显式允许替换：
+
+```powershell
+npx --yes github:foryourhealth111-pixel/Silly-codex --replace-personal
+```
+
+也可以全局安装命令行入口：
+
+```powershell
+npm install --global github:foryourhealth111-pixel/Silly-codex
+silly-codex install
+```
+
+手工安装方式继续保留：
+
 ```powershell
 codex plugin marketplace add foryourhealth111-pixel/Silly-codex --ref main
 codex plugin add instruction-switcher@silly-codex
@@ -13,7 +36,7 @@ codex plugin add instruction-switcher@silly-codex
 
 安装后，在 Codex 的插件设置中审核并信任 `SessionStart` 与 `UserPromptSubmit` Hook。重新启动 Codex 或新建任务后，Windows 伴随窗会自动启动。
 
-如果系统已有旧的 `instruction-switcher@personal` 安装，请先完全退出 Codex，再执行：
+使用手工方式迁移旧的 `instruction-switcher@personal` 安装时，请先完全退出 Codex，再执行：
 
 ```powershell
 codex plugin remove instruction-switcher@personal
@@ -48,10 +71,11 @@ codex plugin remove instruction-switcher@silly-codex
 
 ## 开发
 
-仓库不依赖 npm 包。Node 测试使用内置 `node:test`，Windows 伴随窗使用系统 .NET Framework C# 编译器：
+插件运行时与 npm 安装器都不依赖第三方 npm 包。Node 测试使用内置 `node:test`，Windows 伴随窗使用系统 .NET Framework C# 编译器：
 
 ```powershell
 node --test plugins/instruction-switcher/tests/*.test.mjs
+npm pack --dry-run --json
 powershell -NoProfile -File plugins/instruction-switcher/scripts/build-companion.ps1
 powershell -NoProfile -File plugins/instruction-switcher/tests/companion-lifecycle.test.ps1
 powershell -NoProfile -File plugins/instruction-switcher/tests/library-package.test.ps1

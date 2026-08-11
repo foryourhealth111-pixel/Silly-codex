@@ -1,0 +1,34 @@
+{
+  "name": "silly-codex",
+  "version": "0.1.0",
+  "description": "Install the Silly-codex marketplace and Instruction Switcher plugin.",
+  "license": "Apache-2.0",
+  "author": "foryourhealth111-pixel",
+  "homepage": "https://github.com/foryourhealth111-pixel/Silly-codex",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/foryourhealth111-pixel/Silly-codex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/foryourhealth111-pixel/Silly-codex/issues"
+  },
+  "type": "module",
+  "bin": {
+    "silly-codex": "scripts/install-silly-codex.mjs"
+  },
+  "files": [
+    "scripts/install-silly-codex.mjs",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "codex",
+    "plugin",
+    "hooks",
+    "instruction-switcher"
+  ]
+}
