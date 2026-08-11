@@ -112,6 +112,8 @@ jobs:
           New-Item -ItemType Directory -Force -Path ".\artifacts\release" | Out-Null
           $releaseExe = Join-Path (Resolve-Path ".\artifacts\release") "InstructionSwitcherCompanion.exe"
           Copy-Item -LiteralPath $signedFiles[0].FullName -Destination $releaseExe -Force
+          Copy-Item -LiteralPath ".\plugins\instruction-switcher\LICENSE" -Destination ".\artifacts\release\LICENSE.txt" -Force
+          Copy-Item -LiteralPath ".\plugins\instruction-switcher\NOTICE" -Destination ".\artifacts\release\NOTICE.txt" -Force
           $hash = (Get-FileHash -LiteralPath $releaseExe -Algorithm SHA256).Hash
           "release_exe=$releaseExe" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "sha256=$hash" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
@@ -138,4 +140,4 @@ jobs:
           codex plugin marketplace add foryourhealth111-pixel/Silly-codex --ref $env:GITHUB_REF_NAME
           codex plugin add instruction-switcher@silly-codex
           "@ | Set-Content -Path ".\artifacts\release-notes.md" -Encoding utf8
-          gh release create $env:GITHUB_REF_NAME "$env:RELEASE_EXE#InstructionSwitcherCompanion.exe" --verify-tag --title $env:GITHUB_REF_NAME --notes-file ".\artifacts\release-notes.md"
+          gh release create $env:GITHUB_REF_NAME "$env:RELEASE_EXE#InstructionSwitcherCompanion.exe" ".\artifacts\release\LICENSE.txt#LICENSE.txt" ".\artifacts\release\NOTICE.txt#NOTICE.txt" --verify-tag --title $env:GITHUB_REF_NAME --notes-file ".\artifacts\release-notes.md"

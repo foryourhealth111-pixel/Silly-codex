@@ -20,7 +20,7 @@ Privacy policy: [`PRIVACY.md`](PRIVACY.md).
 3. A SignPath signing request is submitted with the configured project and signing policy.
 4. A maintainer reviews and approves the request in SignPath.
 5. The signed artifact is downloaded and verified with `signtool verify /pa /all /v`.
-6. The verified file is attached to the GitHub Release and receives an artifact attestation.
+6. The verified file, `LICENSE`, and `NOTICE` are attached to the GitHub Release; the EXE also receives an artifact attestation.
 
 The repository does not store a private key, certificate password, or signing certificate. A workflow without the required SignPath secrets may run validation jobs; the release-signing job stops before publishing an unsigned executable.
 

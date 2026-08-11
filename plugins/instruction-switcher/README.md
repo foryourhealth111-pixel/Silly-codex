@@ -120,7 +120,7 @@ New-Item -ItemType Directory -Force -Path (Join-Path $visualRoot "runtime") | Ou
 
 ## 许可证与作者
 
-本插件目录中的源代码、测试、文档、构建脚本和随包默认指令内容按 [Apache License 2.0](LICENSE) 发布。运行时由用户生成的指令正文、配置文件、导出包和任务状态属于用户数据，许可证声明不覆盖这些运行时文件。
+本插件目录中的源代码、测试、文档、构建脚本和随包默认指令内容按 [Apache License 2.0](LICENSE) 发布。运行时目录由用户控制，用户原创内容保留用户自己的权利；从随包种子复制出的部分继续按 Apache-2.0 使用。运行时文件不作为插件包的发布内容。
 
 作者：`foryourhealth111-pixel`。第三方组件和宿主运行时的许可证由各自项目负责；本插件没有随包携带 npm 依赖。运行时数据处理见仓库根目录的 [`PRIVACY.md`](../../PRIVACY.md)。
 

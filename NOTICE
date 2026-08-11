@@ -6,9 +6,10 @@ Repository source code, tests, documentation, build scripts, and bundled
 default instruction seed content are licensed under the Apache License,
 Version 2.0. See LICENSE for the complete license text.
 
-Runtime files created in a user's CODEX_HOME, including instruction bodies,
-configuration files, exports, and task state, are user data and are outside
-the repository license statement.
+Runtime files created in a user's CODEX_HOME are user-controlled data and are
+not distributed as part of this repository. User-authored content retains its
+owner's rights. Copies of bundled seed content remain available under the
+Apache License, Version 2.0.
 
 Codex and OpenAI are trademarks of their respective owners. Silly-codex is
 an independent community project and does not claim affiliation with or

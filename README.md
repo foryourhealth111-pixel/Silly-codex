@@ -54,7 +54,7 @@ powershell -NoProfile -File plugins/instruction-switcher/tests/theme-transition-
 
 GitHub Actions 负责 Node 测试、Windows 构建、插件校验和敏感信息扫描。签名流程使用 SignPath Foundation 的托管 Authenticode 服务：Windows runner 先构建并上传未签名 EXE，SignPath 完成签名后再下载并验证。签名策略和所需 GitHub Secrets 见 [Code signing policy](CODE_SIGNING_POLICY.md)，本地数据处理方式见 [`PRIVACY.md`](PRIVACY.md)。
 
-Release 使用 Git 标签和 GitHub 默认源码归档，不生成额外的自定义插件 ZIP。正式 Release 的 EXE 必须通过：
+Release 使用 Git 标签和 GitHub 默认源码归档，不生成额外的自定义插件 ZIP。正式 Release 同时附加 EXE、`LICENSE.txt` 和 `NOTICE.txt`；EXE 必须通过：
 
 ```powershell
 signtool verify /pa /all /v InstructionSwitcherCompanion.exe
@@ -75,8 +75,8 @@ Silly-codex/
 
 ## 许可证与商标
 
-本仓库中的源代码、测试、文档、构建脚本和随包默认指令内容按 [Apache License 2.0](LICENSE) 发布。运行时由用户生成的指令正文、配置文件、导出包和任务状态属于用户数据，许可证声明不覆盖这些文件。
+本仓库中的源代码、测试、文档、构建脚本和随包默认指令内容按 [Apache License 2.0](LICENSE) 发布。运行时目录由用户控制，用户原创内容保留用户自己的权利；从随包种子复制出的部分继续按 Apache-2.0 使用。运行时文件不作为本仓库的发布内容。
 
 作者：`foryourhealth111-pixel`。Codex 与 OpenAI 是其各自所有者的商标；本项目保持独立运行和发布。
 
-安全问题请参阅 [`SECURITY.md`](SECURITY.md)，贡献流程请参阅 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
+安全问题请参阅 [`SECURITY.md`](SECURITY.md)，贡献流程请参阅 [`CONTRIBUTING.md`](CONTRIBUTING.md)。CI 工具的上游许可见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
