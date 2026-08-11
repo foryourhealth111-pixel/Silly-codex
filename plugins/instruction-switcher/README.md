@@ -15,6 +15,14 @@ codex plugin add instruction-switcher@silly-codex
 
 安装后，在 Codex 的插件设置中审核并信任 `SessionStart` 与 `UserPromptSubmit` 两个 Hook。重新启动 Codex 或新建任务后，伴随窗会自动出现。
 
+如果系统已有旧的 `instruction-switcher@personal` 安装，请先完全退出 Codex，再执行：
+
+```powershell
+codex plugin remove instruction-switcher@personal
+```
+
+该操作移除旧插件缓存和安装登记，`%CODEX_HOME%\instruction-switcher` 中的用户数据会保留。
+
 升级时先退出正在运行的 Codex 实例，再执行：
 
 ```powershell
