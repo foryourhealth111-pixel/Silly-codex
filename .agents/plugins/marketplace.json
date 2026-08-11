@@ -1,0 +1,20 @@
+{
+  "name": "silly-codex",
+  "interface": {
+    "displayName": "Silly Codex"
+  },
+  "plugins": [
+    {
+      "name": "instruction-switcher",
+      "source": {
+        "source": "local",
+        "path": "./plugins/instruction-switcher"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

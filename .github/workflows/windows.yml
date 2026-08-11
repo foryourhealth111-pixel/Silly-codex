@@ -1,0 +1,39 @@
+name: Windows build and tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-build-test:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - name: Validate plugin manifest and layout
+        run: node .\scripts\validate-plugin.mjs
+      - name: Build companion
+        run: .\plugins\instruction-switcher\scripts\build-companion.ps1
+      - name: Run Node tests
+        run: node --test .\plugins\instruction-switcher\tests\*.test.mjs
+      - name: Test companion lifecycle
+        run: .\plugins\instruction-switcher\tests\companion-lifecycle.test.ps1
+      - name: Test library packages
+        run: .\plugins\instruction-switcher\tests\library-package.test.ps1
+      - name: Test theme transition layer
+        run: .\plugins\instruction-switcher\tests\theme-transition-layer.test.ps1
+      # focus-regression.ps1 requires an interactive desktop session.

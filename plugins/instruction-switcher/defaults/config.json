@@ -1,0 +1,51 @@
+{
+  "version": 3,
+  "command": "/choose",
+  "defaultPresetId": null,
+  "instructions": [
+    {
+      "id": "review",
+      "name": "严格审查",
+      "file": "instructions/review.md",
+      "createdAt": "2026-08-10T00:00:00.000Z",
+      "updatedAt": "2026-08-10T00:00:00.000Z"
+    },
+    {
+      "id": "tdd",
+      "name": "测试优先",
+      "file": "instructions/tdd.md",
+      "createdAt": "2026-08-10T00:00:00.000Z",
+      "updatedAt": "2026-08-10T00:00:00.000Z"
+    },
+    {
+      "id": "concise",
+      "name": "简洁输出",
+      "file": "instructions/concise.md",
+      "createdAt": "2026-08-10T00:00:00.000Z",
+      "updatedAt": "2026-08-10T00:00:00.000Z"
+    }
+  ],
+  "presets": [
+    {
+      "id": "preset-default",
+      "name": "默认",
+      "instructionIds": ["concise"],
+      "createdAt": "2026-08-10T00:00:00.000Z",
+      "updatedAt": "2026-08-10T00:00:00.000Z"
+    },
+    {
+      "id": "preset-code-review",
+      "name": "代码审查",
+      "instructionIds": ["review", "concise"],
+      "createdAt": "2026-08-10T00:00:00.000Z",
+      "updatedAt": "2026-08-10T00:00:00.000Z"
+    },
+    {
+      "id": "preset-test-mode",
+      "name": "测试模式",
+      "instructionIds": ["tdd", "concise"],
+      "createdAt": "2026-08-10T00:00:00.000Z",
+      "updatedAt": "2026-08-10T00:00:00.000Z"
+    }
+  ]
+}

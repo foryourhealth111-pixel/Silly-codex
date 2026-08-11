@@ -1,0 +1,40 @@
+# Local editor and operating-system files
+.idea/
+.vscode/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+Thumbs.db
+.DS_Store
+
+# Node and test output
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+coverage/
+
+# Build and signing output
+artifacts/
+dist/
+build/
+*.pfx
+*.p12
+*.pvk
+*.snk
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+*.secret
+*.credentials
+
+# Runtime state created by the plugin
+**/runtime/
+**/sessions/
+**/exports/
+**/config.local.json
+*.log

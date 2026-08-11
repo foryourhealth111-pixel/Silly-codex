@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/hooks/session-start.mjs\"",
+            "commandWindows": "node \"${PLUGIN_ROOT}/hooks/session-start.mjs\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/hooks/prompt-submit.mjs\"",
+            "commandWindows": "node \"${PLUGIN_ROOT}/hooks/prompt-submit.mjs\"",
+            "timeout": 5,
+            "statusMessage": "Applying task instructions"
+          }
+        ]
+      }
+    ]
+  }
+}
