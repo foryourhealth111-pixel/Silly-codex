@@ -4,7 +4,14 @@
 
 它通过 `SessionStart` 与 `UserPromptSubmit` Hook 为每个任务保存独立的指令选择，并提供自动出现的 Windows 桌面伴随窗。
 
-![Instruction Switcher 伴随窗](../../docs/assets/instruction-switcher-panel-dark.png)
+<div align="center">
+
+<a href="../../docs/assets/instruction-switcher-overview.png"><img src="../../docs/assets/instruction-switcher-overview.png" alt="Instruction Switcher 自动跟随任务、应用预设并显示 Hook 已读取状态" width="418"></a>
+
+<br>
+<sub>当前任务、预设、启用顺序和 Hook 回执集中显示在一个面板中。</sub>
+
+</div>
 
 完整的产品介绍、运行示意、设计意义和安装路线见仓库根目录的 [Silly-codex README](../../README.md)。
 

@@ -13,23 +13,33 @@
 
 </div>
 
-## 先看运行效果
+## 30 秒看懂它怎么工作
 
-下面的画面来自 Windows 上真实运行的 `Instruction Switcher` 伴随窗。公开截图保留了任务跟随、预设选择、指令开关和状态栏；任务标题已替换成通用文本。
+### 当前任务里，哪些指令会生效
 
 <div align="center">
 
-<img src="docs/assets/instruction-switcher-panel-dark.png" alt="Silly-codex 深色伴随窗" width="330">
-<img src="docs/assets/instruction-switcher-panel-light.png" alt="Silly-codex 浅色伴随窗" width="330">
+<a href="docs/assets/instruction-switcher-overview.png"><img src="docs/assets/instruction-switcher-overview.png" alt="Silly-codex 功能总览：自动跟随任务、代码审查预设、指令开关与 Hook 已读取状态" width="418"></a>
 
 <br>
-<sub>深色模式 · 浅色模式。窗口停靠在 Codex 右下角，可收束为悬浮球。</sub>
+<sub>原生尺寸 PNG。图中任务与会话信息均为合成演示数据，控件和状态来自真实 Windows 伴随窗。</sub>
 
 </div>
 
-![主题切换实拍 GIF](docs/assets/instruction-switcher-theme.gif)
+这张图集中回答三个最重要的问题：面板正在控制哪个任务、当前启用了哪些指令、Hook 是否已经读取最新状态。示例中选中了“代码审查”预设，“严格审查”和“简洁输出”会按列表顺序应用到下一条消息。
 
-<sub>主题切换 GIF 由同一套 Windows 运行画面生成，展示面板在深色与浅色之间的过渡。</sub>
+### 从选择预设到下一条消息生效
+
+<div align="center">
+
+<a href="docs/assets/instruction-switcher-workflow.gif"><img src="docs/assets/instruction-switcher-workflow.gif" alt="Silly-codex 功能流程：跟随任务、应用预设、查看组合、微调指令、Hook 读取、收起悬浮球" width="794"></a>
+
+<br>
+<sub>原生尺寸功能动图。依次展示任务跟随、应用预设、单条微调、Hook 回执和悬浮球。</sub>
+
+</div>
+
+动图对应一次完整操作：识别当前任务 → 选择“代码审查” → 查看启用顺序 → 打开“测试优先” → 等待 `Hook 已读取` → 收起为悬浮球。每一帧都使用合成任务数据，公开素材不包含本机路径、真实会话 ID 或聊天内容。
 
 ## 一句话理解
 
