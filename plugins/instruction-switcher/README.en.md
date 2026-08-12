@@ -75,9 +75,9 @@ The first run creates an editable local library:
 
 If `CODEX_HOME` is unset, `%USERPROFILE%\\.codex\\instruction-switcher` is used. `INSTRUCTION_SWITCHER_HOME` can point to an isolated data root.
 
-Presets replace the current task selection as a group. Manual toggles or reordering mark the selection as custom. The management window edits Markdown, creates and updates presets, imports and exports packages, and backs up or restores the whole library.
+Presets replace the current task selection as a group. Manual toggles or reordering mark the selection as custom. The `Settings` window edits Markdown, creates and updates presets, imports and exports packages, backs up or restores the whole library, and contains language, theme, and data-folder controls.
 
-Bundled instructions are user-owned seed content. Existing names, bodies, presets, and task state remain unchanged when the interface language changes. A new English installation receives English seed names and bodies; a new Chinese installation receives the Chinese seed set.
+New installations receive six editable default instructions and no bundled presets. Existing names, bodies, presets, and task state remain unchanged when the interface language changes. Chinese and English installations share the same default bodies and use localized display names.
 
 ## Environment And Limits
 
@@ -93,6 +93,7 @@ Bundled instructions are user-owned seed content. Existing names, bodies, preset
 powershell -NoProfile -File scripts/build-companion.ps1
 node --test tests/*.test.mjs
 powershell -NoProfile -File tests/companion-lifecycle.test.ps1
+powershell -NoProfile -File tests/window-presentation.test.ps1
 powershell -NoProfile -File tests/library-package.test.ps1
 powershell -NoProfile -File tests/theme-transition-layer.test.ps1
 ```

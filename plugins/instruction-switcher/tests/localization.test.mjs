@@ -38,12 +38,12 @@ test("saved UI language overrides locale detection", async (t) => {
   assert.equal(await readUiLanguage(root), "zh");
 });
 
-test("a new English installation receives English seed content", async (t) => {
+test("a new English installation receives the configured default library without sample presets", async (t) => {
   const root = await temporaryRoot(t);
   await writeLanguage(root, "en");
   const code = `
     const { loadSettings } = await import(${JSON.stringify(CONFIG_MODULE)});
-    const settings = await loadSettings({ contentIds: ["review"] });
+    const settings = await loadSettings({ contentIds: ["instruction-2cc9c0c6cd124b0698c6745c0e66a627"] });
     process.stdout.write(JSON.stringify(settings));
   `;
   const result = spawnSync(process.execPath, ["--input-type=module", "-e", code], {
@@ -56,16 +56,14 @@ test("a new English installation receives English seed content", async (t) => {
   });
   assert.equal(result.status, 0, result.stderr);
   const settings = JSON.parse(result.stdout);
-  assert.deepEqual(settings.instructions.map((item) => item.name), ["Strict review"]);
-  assert.match(settings.instructions[0].content, /strict code-review standard/u);
+  assert.deepEqual(settings.instructions.map((item) => item.name), ["Direct execution"]);
+  assert.match(settings.instructions[0].content, /fastest reliable delivery/u);
   const installed = JSON.parse(await readFile(path.join(root, "config.json"), "utf8"));
-  assert.deepEqual(
-    installed.presets.map((item) => item.name),
-    ["Default", "Code review", "Test mode"],
-  );
+  assert.equal(installed.instructions.length, 6);
+  assert.deepEqual(installed.presets, []);
 });
 
-test("legacy migration uses the saved language for generated presets", async (t) => {
+test("legacy migration preserves instructions without recreating sample presets", async (t) => {
   const root = await temporaryRoot(t);
   await writeLanguage(root, "en");
   await mkdir(path.join(root, "presets"), { recursive: true });
@@ -92,7 +90,8 @@ test("legacy migration uses the saved language for generated presets", async (t)
   });
   assert.equal(result.status, 0, result.stderr);
   const settings = JSON.parse(result.stdout);
-  assert.deepEqual(settings.presets.map((item) => item.name), ["Code review"]);
+  assert.deepEqual(settings.instructions.map((item) => item.name), ["Review"]);
+  assert.deepEqual(settings.presets, []);
 });
 
 test("English preference localizes choose command feedback", async (t) => {

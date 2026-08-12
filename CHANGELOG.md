@@ -4,6 +4,9 @@
 
 - Add a zero-dependency npm/npx installer for the GitHub marketplace.
 - Keep replacement of an existing `instruction-switcher@personal` installation explicit.
+- Consolidate instruction, preset, language, theme, and data settings into one settings window.
+- Seed new installations with the six configured instructions and no sample presets.
+- Prevent unpainted frames when the companion or settings window becomes visible.
 
 ## [0.1.0] - 2026-08-11
 

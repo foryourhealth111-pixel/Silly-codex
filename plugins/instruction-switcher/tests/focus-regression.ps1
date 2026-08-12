@@ -57,6 +57,7 @@ public static class FocusRegressionNative
     [DllImport("user32.dll")] private static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc callback, IntPtr lParam);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr handle, out uint processId);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr handle, StringBuilder text, int capacity);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr SendMessage(IntPtr handle, uint message, IntPtr wParam, StringBuilder lParam);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(IntPtr handle, StringBuilder text, int capacity);
     [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr handle, out RECT rect);
     [DllImport("user32.dll")] private static extern bool GetGUIThreadInfo(uint threadId, ref GuiThreadInfo info);
@@ -119,7 +120,7 @@ public static class FocusRegressionNative
     public static string Text(IntPtr handle)
     {
         var text = new StringBuilder(512);
-        GetWindowText(handle, text, text.Capacity);
+        SendMessage(handle, 0x000D, new IntPtr(text.Capacity), text);
         return text.ToString();
     }
 
@@ -166,6 +167,11 @@ public static class FocusRegressionNative
         SetWindowPos(handle, new IntPtr(-2), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010);
     }
 
+    public static void SetTopMost(IntPtr handle)
+    {
+        SetWindowPos(handle, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010);
+    }
+
     public static void RestoreForeground(IntPtr handle)
     {
         if (handle != IntPtr.Zero) SwitchToThisWindow(handle, true);
@@ -174,6 +180,11 @@ public static class FocusRegressionNative
     public static bool ShowWithoutActivation(IntPtr handle)
     {
         return ShowWindow(handle, 4);
+    }
+
+    public static bool HideWindow(IntPtr handle)
+    {
+        return ShowWindow(handle, 0);
     }
 
     public static bool Click(IntPtr handle)
@@ -202,6 +213,12 @@ public static class FocusRegressionNative
     {
         return PostMessage(handle, 0x0010, IntPtr.Zero, IntPtr.Zero);
     }
+
+    public static bool KeyPress(IntPtr handle, int virtualKey)
+    {
+        return PostMessage(handle, 0x0100, new IntPtr(virtualKey), IntPtr.Zero)
+            && PostMessage(handle, 0x0101, new IntPtr(virtualKey), IntPtr.Zero);
+    }
 }
 '@
 
@@ -221,89 +238,160 @@ $process = Get-CimInstance Win32_Process | Where-Object {
 if ($null -eq $process) { throw '伴随窗进程未运行' }
 
 $processId = [uint32]$process.ProcessId
-$existingManager = Wait-Window $processId '管理指令库与配置预设' 100
+$existingManager = Wait-Window $processId '设置' 100
 if ($null -ne $existingManager) { throw '管理窗口已在用户操作中，停止回归检查以避免干扰' }
 
-$main = [FocusRegressionNative]::TopLevel($processId) | Where-Object { $_.Title -eq 'Instruction Switcher' } | Select-Object -First 1
-if ($null -eq $main) { throw '伴随窗主窗口未找到' }
-[FocusRegressionNative]::ShowWithoutActivation($main.Handle) | Out-Null
-$manage = [FocusRegressionNative]::Children($main.Handle) | Where-Object { $_.Title -eq '管理指令库' } | Select-Object -First 1
-if ($null -eq $manage) { throw '管理按钮未找到' }
-[FocusRegressionNative]::ButtonClick($manage.Handle) | Out-Null
+$originalForeground = [FocusRegressionNative]::Foreground()
+$main = $null
+$manager = $null
+$wasBubble = $false
+$mainStateCaptured = $false
+$originalMainVisible = $false
+$originalMainTopMost = $false
+$settingsClickIssued = $false
+$exitCode = 1
 
-$manager = Wait-Window $processId '管理指令库与配置预设'
-if ($null -eq $manager) { throw '管理窗口未打开' }
-
-$add = [FocusRegressionNative]::Children($manager.Handle) | Where-Object { $_.Title -eq '新增指令' } | Select-Object -First 1
-if ($null -eq $add) { throw '新增指令按钮未找到' }
-[FocusRegressionNative]::MakeForeground($manager.Handle)
-[FocusRegressionNative]::RealClick([int](($add.Left + $add.Right) / 2), [int](($add.Top + $add.Bottom) / 2)) | Out-Null
-Start-Sleep -Milliseconds 250
-[FocusRegressionNative]::RemoveTopMost($manager.Handle)
-Start-Sleep -Milliseconds 150
-
-$nameBox = [FocusRegressionNative]::Children($manager.Handle) |
-    Where-Object { $_.ClassName -like '*EDIT*' -and $_.ClassName -notlike '*RichEdit*' -and $_.Left -gt ($manager.Left + 250) } |
-    Sort-Object Top | Select-Object -First 1
-if ($null -eq $nameBox) { throw '新指令名称输入框未找到' }
-$initialName = [FocusRegressionNative]::Text($nameBox.Handle)
-if (-not [String]::IsNullOrEmpty($initialName)) { throw "新增指令未进入空白编辑状态：$initialName" }
-
-$previousForeground = [FocusRegressionNative]::Foreground()
-[FocusRegressionNative]::MakeForeground($manager.Handle)
-$clickX = [int](($nameBox.Left + $nameBox.Right) / 2)
-$clickY = [int](($nameBox.Top + $nameBox.Bottom) / 2)
-[FocusRegressionNative]::RealClick($clickX, $clickY) | Out-Null
-Start-Sleep -Milliseconds 100
-[FocusRegressionNative]::RemoveTopMost($manager.Handle)
-[FocusRegressionNative]::RealClick($clickX, $clickY) | Out-Null
-Start-Sleep -Milliseconds 100
-$immediateFocus = [FocusRegressionNative]::Focus($manager.ThreadId)
-$immediateForeground = [FocusRegressionNative]::Foreground()
-$focusChangedAtMs = $null
-$focusChangedForeground = $null
-$focusChangedTopMost = $null
-$focusChangedMainVisible = $null
-$focusChangedManagerVisible = $null
-$started = [Diagnostics.Stopwatch]::StartNew()
-while ($started.ElapsedMilliseconds -lt 1500) {
-    Start-Sleep -Milliseconds 25
-    $sampleFocus = [FocusRegressionNative]::Focus($manager.ThreadId)
-    if ($null -eq $focusChangedAtMs -and $sampleFocus -ne $nameBox.Handle) {
-        $focusChangedAtMs = $started.ElapsedMilliseconds
-        $focusChangedForeground = [FocusRegressionNative]::Foreground().ToInt64()
-        $focusChangedTopMost = [FocusRegressionNative]::TopMost($main.Handle)
-        $focusChangedMainVisible = [FocusRegressionNative]::Visible($main.Handle)
-        $focusChangedManagerVisible = [FocusRegressionNative]::Visible($manager.Handle)
+try {
+    $main = [FocusRegressionNative]::TopLevel($processId) | Where-Object { $_.Title -eq 'Instruction Switcher' } | Select-Object -First 1
+    if ($null -eq $main) { throw '伴随窗主窗口未找到' }
+    $originalMainVisible = [FocusRegressionNative]::Visible($main.Handle)
+    $originalMainTopMost = [FocusRegressionNative]::TopMost($main.Handle)
+    $mainStateCaptured = $true
+    [FocusRegressionNative]::ShowWithoutActivation($main.Handle) | Out-Null
+    $wasBubble = ($main.Right - $main.Left) -lt 200
+    if ($wasBubble) {
+        $bubble = [FocusRegressionNative]::Children($main.Handle) |
+            Where-Object { [FocusRegressionNative]::Visible($_.Handle) } |
+            Select-Object -First 1
+        if ($null -eq $bubble) { throw '悬浮球控件未找到' }
+        [FocusRegressionNative]::Click($bubble.Handle) | Out-Null
+        Start-Sleep -Milliseconds 500
+        $main = [FocusRegressionNative]::TopLevel($processId) | Where-Object { $_.Title -eq 'Instruction Switcher' } | Select-Object -First 1
+        if ($null -eq $main -or ($main.Right - $main.Left) -lt 200) { throw '悬浮球未展开' }
     }
-}
-$delayedFocus = [FocusRegressionNative]::Focus($manager.ThreadId)
-$typedMarker = 'focus-check'
-[FocusRegressionNative]::TypeText($nameBox.Handle, $typedMarker) | Out-Null
-Start-Sleep -Milliseconds 100
-$typedText = [FocusRegressionNative]::Text($nameBox.Handle)
+    $manage = [FocusRegressionNative]::Children($main.Handle) | Where-Object { $_.Title -eq '设置' } | Select-Object -First 1
+    if ($null -eq $manage) { throw '设置按钮未找到' }
+    $settingsClickIssued = $true
+    [FocusRegressionNative]::RealClick(
+        [int](($manage.Left + $manage.Right) / 2),
+        [int](($manage.Top + $manage.Bottom) / 2)) | Out-Null
 
-$result = [PSCustomObject]@{
-    ManagerThread = $manager.ThreadId
-    InputHandle = $nameBox.Handle.ToInt64()
-    ImmediateFocus = $immediateFocus.ToInt64()
-    ImmediateForeground = $immediateForeground.ToInt64()
-    DelayedFocus = $delayedFocus.ToInt64()
-    FocusChangedAtMs = $focusChangedAtMs
-    FocusChangedForeground = $focusChangedForeground
-    MainTopMostAtChange = $focusChangedTopMost
-    MainVisibleAtChange = $focusChangedMainVisible
-    ManagerVisibleAtChange = $focusChangedManagerVisible
-    FocusRetained = ($delayedFocus -eq $nameBox.Handle)
-    TypedText = $typedText
-    TypingAccepted = ($typedText -eq $typedMarker)
-    InitialName = $initialName
-}
-$result | ConvertTo-Json
+    $manager = Wait-Window $processId '设置'
+    if ($null -eq $manager) { throw '设置窗口未打开' }
 
-$cancel = [FocusRegressionNative]::Children($manager.Handle) | Where-Object { $_.Title -eq '取消' } | Select-Object -First 1
-if ($null -ne $cancel) { [FocusRegressionNative]::ButtonClick($cancel.Handle) | Out-Null }
-Start-Sleep -Milliseconds 150
-[FocusRegressionNative]::Close($manager.Handle) | Out-Null
-[FocusRegressionNative]::RestoreForeground($previousForeground)
-exit ($(if ($result.FocusRetained -and $result.TypingAccepted) { 0 } else { 1 }))
+    $tabs = [FocusRegressionNative]::Children($manager.Handle) |
+        Where-Object {
+            [FocusRegressionNative]::Visible($_.Handle) -and
+            $_.ClassName -like '*SysTabControl32*'
+        } |
+        Select-Object -First 1
+    if ($null -eq $tabs) { throw '设置页签未找到' }
+    [FocusRegressionNative]::Click($tabs.Handle) | Out-Null
+    Start-Sleep -Milliseconds 150
+
+    $add = [FocusRegressionNative]::Children($manager.Handle) | Where-Object { $_.Title -eq '新增指令' } | Select-Object -First 1
+    if ($null -eq $add) { throw '新增指令按钮未找到' }
+    [FocusRegressionNative]::MakeForeground($manager.Handle)
+    [FocusRegressionNative]::RealClick([int](($add.Left + $add.Right) / 2), [int](($add.Top + $add.Bottom) / 2)) | Out-Null
+    Start-Sleep -Milliseconds 250
+    [FocusRegressionNative]::RemoveTopMost($manager.Handle)
+    Start-Sleep -Milliseconds 150
+
+    $nameBox = [FocusRegressionNative]::Children($manager.Handle) |
+        Where-Object {
+            [FocusRegressionNative]::Visible($_.Handle) -and
+            $_.ClassName -like '*EDIT*' -and
+            $_.ClassName -notlike '*RichEdit*' -and
+            $_.Left -gt ($manager.Left + 200)
+        } |
+        Sort-Object Top | Select-Object -First 1
+    if ($null -eq $nameBox) { throw '新指令名称输入框未找到' }
+    $initialName = [FocusRegressionNative]::Text($nameBox.Handle)
+    if (-not [String]::IsNullOrEmpty($initialName)) { throw "新增指令未进入空白编辑状态：$initialName" }
+
+    [FocusRegressionNative]::MakeForeground($manager.Handle)
+    $clickX = [int](($nameBox.Left + $nameBox.Right) / 2)
+    $clickY = [int](($nameBox.Top + $nameBox.Bottom) / 2)
+    [FocusRegressionNative]::RealClick($clickX, $clickY) | Out-Null
+    Start-Sleep -Milliseconds 100
+    [FocusRegressionNative]::RemoveTopMost($manager.Handle)
+    [FocusRegressionNative]::RealClick($clickX, $clickY) | Out-Null
+    Start-Sleep -Milliseconds 100
+    $immediateFocus = [FocusRegressionNative]::Focus($manager.ThreadId)
+    $immediateForeground = [FocusRegressionNative]::Foreground()
+    $focusChangedAtMs = $null
+    $focusChangedForeground = $null
+    $focusChangedTopMost = $null
+    $focusChangedMainVisible = $null
+    $focusChangedManagerVisible = $null
+    $started = [Diagnostics.Stopwatch]::StartNew()
+    while ($started.ElapsedMilliseconds -lt 1500) {
+        Start-Sleep -Milliseconds 25
+        $sampleFocus = [FocusRegressionNative]::Focus($manager.ThreadId)
+        if ($null -eq $focusChangedAtMs -and $sampleFocus -ne $nameBox.Handle) {
+            $focusChangedAtMs = $started.ElapsedMilliseconds
+            $focusChangedForeground = [FocusRegressionNative]::Foreground().ToInt64()
+            $focusChangedTopMost = [FocusRegressionNative]::TopMost($main.Handle)
+            $focusChangedMainVisible = [FocusRegressionNative]::Visible($main.Handle)
+            $focusChangedManagerVisible = [FocusRegressionNative]::Visible($manager.Handle)
+        }
+    }
+    $delayedFocus = [FocusRegressionNative]::Focus($manager.ThreadId)
+    $typedMarker = 'focus-check'
+    [FocusRegressionNative]::TypeText($nameBox.Handle, $typedMarker) | Out-Null
+    Start-Sleep -Milliseconds 100
+    $typedText = [FocusRegressionNative]::Text($nameBox.Handle)
+
+    $result = [PSCustomObject]@{
+        ManagerThread = $manager.ThreadId
+        InputHandle = $nameBox.Handle.ToInt64()
+        ImmediateFocus = $immediateFocus.ToInt64()
+        ImmediateForeground = $immediateForeground.ToInt64()
+        DelayedFocus = $delayedFocus.ToInt64()
+        FocusChangedAtMs = $focusChangedAtMs
+        FocusChangedForeground = $focusChangedForeground
+        MainTopMostAtChange = $focusChangedTopMost
+        MainVisibleAtChange = $focusChangedMainVisible
+        ManagerVisibleAtChange = $focusChangedManagerVisible
+        FocusRetained = ($delayedFocus -eq $nameBox.Handle)
+        TypedText = $typedText
+        TypingAccepted = ($typedText -eq $typedMarker)
+        InitialName = $initialName
+    }
+    $result | ConvertTo-Json
+    $exitCode = if ($result.FocusRetained -and $result.TypingAccepted) { 0 } else { 1 }
+}
+finally {
+    $cleanupManager = $manager
+    if ($null -eq $cleanupManager -and $settingsClickIssued) {
+        try { $cleanupManager = Wait-Window $processId '设置' 500 } catch { $cleanupManager = $null }
+    }
+    if ($null -ne $cleanupManager) {
+        try {
+            $cancel = [FocusRegressionNative]::Children($cleanupManager.Handle) |
+                Where-Object { $_.Title -eq '取消' } | Select-Object -First 1
+            if ($null -ne $cancel) { [FocusRegressionNative]::ButtonClick($cancel.Handle) | Out-Null }
+        } catch { }
+        try { Start-Sleep -Milliseconds 150; [FocusRegressionNative]::Close($cleanupManager.Handle) | Out-Null } catch { }
+        try { [FocusRegressionNative]::RemoveTopMost($cleanupManager.Handle) | Out-Null } catch { }
+    }
+    if ($wasBubble -and $null -ne $main) {
+        try {
+            Start-Sleep -Milliseconds 200
+            [FocusRegressionNative]::MakeForeground($main.Handle)
+            [FocusRegressionNative]::KeyPress($main.Handle, 0x1B) | Out-Null
+            Start-Sleep -Milliseconds 350
+        } catch { }
+    }
+    if ($mainStateCaptured -and $null -ne $main) {
+        try {
+            if ($originalMainTopMost) { [FocusRegressionNative]::SetTopMost($main.Handle) }
+            else { [FocusRegressionNative]::RemoveTopMost($main.Handle) }
+        } catch { }
+        if (-not $originalMainVisible) {
+            try { [FocusRegressionNative]::HideWindow($main.Handle) | Out-Null } catch { }
+        }
+    }
+    try { [FocusRegressionNative]::RestoreForeground($originalForeground) } catch { }
+}
+exit $exitCode

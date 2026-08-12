@@ -171,7 +171,7 @@ test("legacy config migration copies bodies byte-for-byte and keeps legacy files
   const config = await readJson(path.join(root, "config.json"));
   assert.equal(config.version, 3);
   assert.deepEqual(config.instructions.map((item) => item.id), ["review"]);
-  assert.deepEqual(config.presets.map((item) => item.id), ["preset-code-review"]);
+  assert.deepEqual(config.presets, []);
   assert.deepEqual(
     await readFile(path.join(root, "instructions", "review.md")),
     legacyBody,

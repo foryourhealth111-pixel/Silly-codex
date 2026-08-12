@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -129,6 +130,12 @@ namespace InstructionSwitcherCompanion
         private SettingsDto settings;
         private string configSignature;
         private bool libraryReady;
+        private ThemedTabControl mainTabs;
+        private TabPage settingsPage;
+        private ComboBox languagePicker;
+        private ComboBox themePicker;
+        private ThemedButton applySettingsButton;
+        private bool settingsApplyRequested;
 
         private ThemedTextBox instructionSearch;
         private ComboBox instructionScope;
@@ -166,6 +173,19 @@ namespace InstructionSwitcherCompanion
         private bool dragArmed;
 
         public string ImportedPresetIdToApply { get; private set; }
+        public bool SettingsApplied { get; private set; }
+        public UiLanguage RequestedLanguage { get; private set; }
+        public ThemeMode RequestedThemeMode { get; private set; }
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams value = base.CreateParams;
+                value.ExStyle |= CompanionTheme.CompositedWindowStyle;
+                return value;
+            }
+        }
 
         private static JavaScriptSerializer CreateSerializer()
         {
@@ -185,7 +205,7 @@ namespace InstructionSwitcherCompanion
             this.root = root;
             this.stateRoot = stateRoot;
             this.themeMode = themeMode;
-            Text = UiText.T("管理指令库与配置预设");
+            Text = UiText.T("设置");
             ClientSize = new Size(960, 640);
             MinimumSize = new Size(860, 580);
             StartPosition = FormStartPosition.CenterParent;
@@ -193,20 +213,42 @@ namespace InstructionSwitcherCompanion
             Font = CompanionTheme.UiFont(9.5F);
             AutoScaleMode = AutoScaleMode.Dpi;
             DoubleBuffered = true;
-            BuildWindow();
-            ApplyTheme();
-            Reload(null, null);
+            BackColor = CompanionTheme.Palette(themeMode).Window;
+            SuspendLayout();
+            try
+            {
+                BuildWindow();
+                ApplyTheme();
+                Reload(null, null);
+            }
+            finally
+            {
+                ResumeLayout(true);
+            }
             FormClosing += HandleClosing;
+        }
+
+        public void PrepareForModalDisplay()
+        {
+            if (IsDisposed) return;
+            if (!IsHandleCreated) CreateHandle();
+            PerformLayout();
+            CompanionTheme.ApplyWindow(this, themeMode);
+            Invalidate(true);
         }
 
         private void BuildWindow()
         {
-            var tabs = new ThemedTabControl { Dock = DockStyle.Fill, ThemeMode = themeMode, FillTabs = true };
+            mainTabs = new ThemedTabControl { Dock = DockStyle.Fill, ThemeMode = themeMode, FillTabs = true };
             var instructions = new TabPage(UiText.T("指令库"));
             var presets = new TabPage(UiText.T("配置预设"));
-            tabs.TabPages.Add(instructions); tabs.TabPages.Add(presets);
+            settingsPage = new TabPage(UiText.T("设置"));
+            mainTabs.TabPages.Add(instructions);
+            mainTabs.TabPages.Add(presets);
+            mainTabs.TabPages.Add(settingsPage);
             BuildInstructionPage(instructions);
             BuildPresetPage(presets);
+            BuildSettingsPage(settingsPage);
 
             var commandBar = new FlowLayoutPanel {
                 Dock = DockStyle.Bottom,
@@ -238,9 +280,185 @@ namespace InstructionSwitcherCompanion
             import.Click += ImportPackage;
             commandBar.Controls.Add(import);
             commandBar.Controls.Add(more);
-            Controls.Add(tabs);
+            Controls.Add(mainTabs);
             Controls.Add(commandBar);
-            tabs.RefreshTabMetrics();
+            mainTabs.SelectedTab = settingsPage;
+            mainTabs.RefreshTabMetrics();
+        }
+
+        private void BuildSettingsPage(TabPage page)
+        {
+            page.Padding = new Padding(28, 24, 28, 24);
+
+            var layout = new TableLayoutPanel {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                ColumnCount = 2,
+                RowCount = 8,
+                Padding = new Padding(0),
+                Margin = new Padding(0)
+            };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180F));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+            var appearanceHeading = new ThemedLabel {
+                Text = UiText.T("外观与语言"),
+                Dock = DockStyle.Fill,
+                Height = 34,
+                ThemeMode = themeMode,
+                Font = CompanionTheme.UiFont(10F, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            layout.Controls.Add(appearanceHeading, 0, 0);
+            layout.SetColumnSpan(appearanceHeading, 2);
+
+            var languageLabel = new ThemedLabel {
+                Text = UiText.T("界面语言"),
+                Dock = DockStyle.Fill,
+                Height = 44,
+                ThemeMode = themeMode,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            languagePicker = new ThemedComboBox {
+                Dock = DockStyle.Fill,
+                Height = 30,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                ThemeMode = themeMode,
+                AccessibleName = UiText.T("界面语言")
+            };
+            languagePicker.Items.Add(UiText.T("中文"));
+            languagePicker.Items.Add(UiText.T("英文"));
+            languagePicker.SelectedIndex = UiText.Current == UiLanguage.English ? 1 : 0;
+            languagePicker.SelectedIndexChanged += SettingsSelectionChanged;
+            layout.Controls.Add(languageLabel, 0, 1);
+            layout.Controls.Add(languagePicker, 1, 1);
+
+            var themeLabel = new ThemedLabel {
+                Text = UiText.T("界面主题"),
+                Dock = DockStyle.Fill,
+                Height = 44,
+                ThemeMode = themeMode,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            themePicker = new ThemedComboBox {
+                Dock = DockStyle.Fill,
+                Height = 30,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                ThemeMode = themeMode,
+                AccessibleName = UiText.T("界面主题")
+            };
+            themePicker.Items.Add(UiText.T("浅色"));
+            themePicker.Items.Add(UiText.T("深色"));
+            themePicker.SelectedIndex = themeMode == ThemeMode.Dark ? 1 : 0;
+            themePicker.SelectedIndexChanged += SettingsSelectionChanged;
+            layout.Controls.Add(themeLabel, 0, 2);
+            layout.Controls.Add(themePicker, 1, 2);
+
+            var spacer = new Panel { Dock = DockStyle.Fill, Height = 28 };
+            layout.Controls.Add(spacer, 0, 3);
+            layout.SetColumnSpan(spacer, 2);
+
+            var dataHeading = new ThemedLabel {
+                Text = UiText.T("数据与存储"),
+                Dock = DockStyle.Fill,
+                Height = 34,
+                ThemeMode = themeMode,
+                Font = CompanionTheme.UiFont(10F, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            layout.Controls.Add(dataHeading, 0, 4);
+            layout.SetColumnSpan(dataHeading, 2);
+
+            var dataLabel = new ThemedLabel {
+                Text = UiText.T("数据目录"),
+                Dock = DockStyle.Fill,
+                Height = 44,
+                ThemeMode = themeMode,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            var dataRow = new TableLayoutPanel {
+                Dock = DockStyle.Fill,
+                Height = 34,
+                ColumnCount = 2,
+                Margin = new Padding(0)
+            };
+            dataRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            dataRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 112F));
+            var dataPath = new ThemedTextBox {
+                Text = root,
+                ReadOnly = true,
+                Dock = DockStyle.Fill,
+                Height = 30,
+                ThemeMode = themeMode,
+                AccessibleName = UiText.T("数据目录")
+            };
+            var openData = new ThemedButton {
+                Text = UiText.T("打开"),
+                Glyph = GlyphKind.Folder,
+                ThemeMode = themeMode,
+                Kind = ThemedButtonKind.Secondary,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(8, 0, 0, 0),
+                AccessibleName = UiText.T("打开数据目录")
+            };
+            openData.Click += OpenDataFolder;
+            dataRow.Controls.Add(dataPath, 0, 0);
+            dataRow.Controls.Add(openData, 1, 0);
+            layout.Controls.Add(dataLabel, 0, 5);
+            layout.Controls.Add(dataRow, 1, 5);
+
+            var actionSpacer = new Panel { Dock = DockStyle.Fill, Height = 34 };
+            layout.Controls.Add(actionSpacer, 0, 6);
+            layout.SetColumnSpan(actionSpacer, 2);
+
+            var actions = new FlowLayoutPanel {
+                Dock = DockStyle.Fill,
+                Height = 38,
+                FlowDirection = FlowDirection.RightToLeft,
+                WrapContents = false,
+                Margin = new Padding(0)
+            };
+            applySettingsButton = new ThemedButton {
+                Text = UiText.T("应用设置"),
+                ThemeMode = themeMode,
+                Kind = ThemedButtonKind.Primary,
+                Size = new Size(118, 32),
+                Enabled = false,
+                AccessibleName = UiText.T("应用设置")
+            };
+            applySettingsButton.Click += ApplySettings;
+            actions.Controls.Add(applySettingsButton);
+            layout.Controls.Add(actions, 0, 7);
+            layout.SetColumnSpan(actions, 2);
+
+            page.Controls.Add(layout);
+        }
+
+        private void SettingsSelectionChanged(object sender, EventArgs e)
+        {
+            if (applySettingsButton == null || languagePicker == null || themePicker == null) return;
+            UiLanguage selectedLanguage = languagePicker.SelectedIndex == 1
+                ? UiLanguage.English : UiLanguage.Chinese;
+            ThemeMode selectedTheme = themePicker.SelectedIndex == 1
+                ? ThemeMode.Dark : ThemeMode.Light;
+            applySettingsButton.Enabled = selectedLanguage != UiText.Current || selectedTheme != themeMode;
+        }
+
+        private void ApplySettings(object sender, EventArgs e)
+        {
+            settingsApplyRequested = true;
+            Close();
+        }
+
+        private void OpenDataFolder(object sender, EventArgs e)
+        {
+            Directory.CreateDirectory(root);
+            Process.Start(new ProcessStartInfo {
+                FileName = "explorer.exe",
+                Arguments = "\"" + root + "\"",
+                UseShellExecute = true
+            });
         }
 
         private void ApplyTheme()
@@ -1397,7 +1615,18 @@ namespace InstructionSwitcherCompanion
 
         private void HandleClosing(object sender, FormClosingEventArgs e)
         {
-            if (!ConfirmInstructionEdit() || !ConfirmPresetEdit()) e.Cancel = true;
+            if (!ConfirmInstructionEdit() || !ConfirmPresetEdit())
+            {
+                settingsApplyRequested = false;
+                e.Cancel = true;
+                return;
+            }
+            if (!settingsApplyRequested) return;
+            RequestedLanguage = languagePicker.SelectedIndex == 1
+                ? UiLanguage.English : UiLanguage.Chinese;
+            RequestedThemeMode = themePicker.SelectedIndex == 1
+                ? ThemeMode.Dark : ThemeMode.Light;
+            SettingsApplied = true;
         }
     }
 }

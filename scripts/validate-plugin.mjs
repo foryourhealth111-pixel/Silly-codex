@@ -95,12 +95,25 @@ for (const relativePath of [
   "companion/focus-tracker.mjs",
   "defaults/config.json",
   "defaults/en/config.json",
-  "defaults/en/instructions/review.md",
-  "defaults/en/instructions/tdd.md",
-  "defaults/en/instructions/concise.md",
+  "defaults/instructions",
   "README.en.md",
 ]) {
   if (!(await exists(relativePath))) errors.push(`required file is missing: ${relativePath}`);
+}
+
+for (const configPath of ["defaults/config.json", "defaults/en/config.json"]) {
+  const defaults = await readJson(configPath);
+  if (!defaults) continue;
+  if (!Array.isArray(defaults.instructions) || defaults.instructions.length === 0) {
+    errors.push(`${configPath}: instructions must be a non-empty array`);
+    continue;
+  }
+  for (const instruction of defaults.instructions) {
+    const relativeFile = typeof instruction?.file === "string" ? instruction.file : "";
+    if (!relativeFile.startsWith("instructions/") || !(await exists(path.join("defaults", relativeFile)))) {
+      errors.push(`${configPath}: instruction body is missing: ${relativeFile || "<empty>"}`);
+    }
+  }
 }
 
 if (await exists(".mcp.json")) errors.push("MCP release component must be removed: .mcp.json");

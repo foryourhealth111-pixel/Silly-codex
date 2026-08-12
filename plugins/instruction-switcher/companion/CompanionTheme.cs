@@ -103,6 +103,7 @@ namespace InstructionSwitcherCompanion
 
     internal static class CompanionTheme
     {
+        public const int CompositedWindowStyle = 0x02000000;
         private const int EmSetCueBanner = 0x1501;
         private const int LbSetItemHeight = 0x01A0;
         private const int DwmUseImmersiveDarkMode = 20;

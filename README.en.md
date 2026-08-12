@@ -95,8 +95,8 @@ The boundaries stay simple: Hooks read state and inject content, the companion p
 
 ### Presets and instruction library
 
-- Start with example instructions for strict review, test-first work, and concise responses.
-- Save combinations as presets such as Code review or Test mode.
+- Start with six editable instructions maintained as the project's default working set.
+- Begin with no bundled presets, then save combinations that match your own workflow.
 - Drag enabled rows to change injection order.
 - Edit Markdown, sort entries, import, export, back up, and restore.
 - See a custom-selection label after a preset is manually adjusted.
@@ -106,7 +106,7 @@ The boundaries stay simple: Hooks read state and inject content, the companion p
 - Start from `SessionStart` and appear near the lower-right corner.
 - Use the expanded panel, floating button, or system tray.
 - Switch between light and dark themes.
-- Switch between Chinese and English from the footer or tray `Language` menu; the choice is saved in the window preferences.
+- Manage interface language, theme, and the data folder from one `Settings` window.
 - Suppress the companion while Codex is in the background, then restore the previous panel or floating-button state when Codex returns.
 - Press `Esc` to collapse; click the floating button to expand again.
 
@@ -117,9 +117,9 @@ Send a control command in the message box. The Hook handles it and blocks the co
 ```text
 /choose status
 /choose list
-/choose set review,tdd
-/choose on concise
-/choose off review
+/choose set <instruction-id-1>,<instruction-id-2>
+/choose on <instruction-id>
+/choose off <instruction-id>
 /choose clear
 ```
 
@@ -174,9 +174,9 @@ The migration removes the old registration and keeps the instruction library, pr
 3. Choose a preset, or toggle an individual instruction.
 4. Submit a normal message. The Hook reads the task selection and injects the matching Markdown bodies.
 5. Use the collapse button when you want the smaller floating entry point.
-6. Open Manage library to edit content or use the backup and import/export actions.
+6. Open `Settings` to manage instructions, presets, language, theme, and the data folder in one place.
 
-The first run chooses Chinese or English from the Windows UI language. You can change it later from the footer or tray menu. User-authored instruction names and Markdown bodies remain unchanged when the interface language changes.
+The first run chooses Chinese or English from the Windows UI language. Language and theme can be changed in `Settings`. Existing instruction names, preset names, and Markdown bodies remain unchanged. New Chinese and English installations share the same six default bodies and use localized display names.
 
 ## Supported Environment
 
@@ -238,6 +238,7 @@ node --test plugins/instruction-switcher/tests/*.test.mjs
 npm pack --dry-run --json
 powershell -NoProfile -File plugins/instruction-switcher/scripts/build-companion.ps1
 powershell -NoProfile -File plugins/instruction-switcher/tests/companion-lifecycle.test.ps1
+powershell -NoProfile -File plugins/instruction-switcher/tests/window-presentation.test.ps1
 powershell -NoProfile -File plugins/instruction-switcher/tests/library-package.test.ps1
 powershell -NoProfile -File plugins/instruction-switcher/tests/theme-transition-layer.test.ps1
 node scripts/validate-plugin.mjs

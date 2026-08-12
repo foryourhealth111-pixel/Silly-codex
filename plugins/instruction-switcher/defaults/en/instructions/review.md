@@ -1,1 +1,0 @@
-Apply a strict code-review standard. Prioritize correctness, regression risk, edge cases, security, and missing tests. Lead each finding with the conclusion, then provide the file location, impact, and an actionable fix.

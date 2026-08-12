@@ -388,15 +388,12 @@ namespace InstructionSwitcherCompanion
         private Panel instructionSection;
         private Panel statusPanel;
         private ThemeTransitionLayer themeTransitionLayer;
-        private ThemedButton themeButton;
         private ThemedButton collapseButton;
         private ThemedButton presetMenuButton;
         private ThemedButton footerMenuButton;
         private ContextMenuStrip trayMenu;
         private ContextMenuStrip presetMenu;
         private ContextMenuStrip footerMenu;
-        private ToolStripMenuItem footerLanguageMenu;
-        private ToolStripMenuItem trayLanguageMenu;
         private readonly System.Windows.Forms.Timer transitionTimer = new System.Windows.Forms.Timer();
         private readonly System.Windows.Forms.Timer themeTimer = new System.Windows.Forms.Timer();
         private string activeKey;
@@ -521,6 +518,12 @@ namespace InstructionSwitcherCompanion
             get { return true; }
         }
 
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            if (!initialPlacementApplied) ApplyInitialPlacement();
+        }
+
         public CompanionForm(string runtimeRoot)
         {
             this.runtimeRoot = PathHelpers.NormalizeDirectory(runtimeRoot);
@@ -607,14 +610,6 @@ namespace InstructionSwitcherCompanion
             brand.Cursor = Cursors.SizeAll;
             var title = MakeLabel("Silly codex", 58, 18, 238, 25, true);
             title.Font = new Font(Font.FontFamily, 10F, FontStyle.Bold);
-            themeButton = new ThemedButton {
-                Kind = ThemedButtonKind.Ghost,
-                Location = new Point(318, 14),
-                Size = new Size(34, 34),
-                ShowBorder = false,
-                TabStop = false
-            };
-            themeButton.Click += ToggleTheme;
             collapseButton = new ThemedButton {
                 Kind = ThemedButtonKind.Ghost,
                 Glyph = GlyphKind.Collapse,
@@ -630,12 +625,10 @@ namespace InstructionSwitcherCompanion
             AttachDrag(title);
             headerPanel.Controls.Add(brand);
             headerPanel.Controls.Add(title);
-            headerPanel.Controls.Add(themeButton);
             headerPanel.Controls.Add(collapseButton);
             headerPanel.Resize += delegate {
                 collapseButton.Left = Math.Max(0, headerPanel.ClientSize.Width - collapseButton.Width - 12);
-                themeButton.Left = Math.Max(0, collapseButton.Left - themeButton.Width - 4);
-                title.Width = Math.Max(80, themeButton.Left - title.Left - 8);
+                title.Width = Math.Max(80, collapseButton.Left - title.Left - 8);
             };
 
             var body = new Panel { Dock = DockStyle.Fill };
@@ -743,16 +736,17 @@ namespace InstructionSwitcherCompanion
             var instructionHeader = new Panel { Dock = DockStyle.Top, Height = 43 };
             instructionHeader.Controls.Add(MakeLabel(UiText.T("启用指令"), 16, 9, 170, 26, true));
             manageButton = new ThemedButton {
-                Text = UiText.T("管理指令库"),
+                Text = UiText.T("设置"),
                 Glyph = GlyphKind.Settings,
                 Kind = ThemedButtonKind.Ghost,
                 Location = new Point(264, 6),
                 Size = new Size(120, 32),
                 ShowBorder = false,
-                TabStop = false
+                TabStop = false,
+                AccessibleName = UiText.T("设置")
             };
             manageButton.Click += OpenManager;
-            tips.SetToolTip(manageButton, UiText.T("编辑指令项、配置预设、默认配置和导入导出"));
+            tips.SetToolTip(manageButton, UiText.T("管理指令、配置预设、语言、主题和数据目录"));
             instructionHeader.Controls.Add(manageButton);
             instructionHeader.Resize += delegate {
                 manageButton.Left = Math.Max(16, instructionHeader.ClientSize.Width - manageButton.Width - 16);
@@ -793,10 +787,7 @@ namespace InstructionSwitcherCompanion
                 TabStop = false
             };
             footerMenu = new ContextMenuStrip();
-            footerMenu.Items.Add(UiText.T("打开配置目录"), null, delegate { OpenConfigFolder(); });
             footerMenu.Items.Add(UiText.T("隐藏到托盘"), null, delegate { HideForUser(); });
-            footerLanguageMenu = BuildLanguageMenu();
-            footerMenu.Items.Add(footerLanguageMenu);
             footerMenu.Items.Add(new ToolStripSeparator());
             footerMenu.Items.Add(UiText.T("退出"), null, delegate { ExitApplication(); });
             footerMenuButton.Click += delegate {
@@ -1080,8 +1071,9 @@ namespace InstructionSwitcherCompanion
             return enabled;
         }
 
-        private void ToggleTheme(object sender, EventArgs e)
+        private void ChangeTheme(ThemeMode requestedMode)
         {
+            if (themeMode == requestedMode) return;
             if (transitioning) FinishTransition();
             if (themeTransitioning) FinishThemeTransition();
             ThemeMode previousMode = themeMode;
@@ -1096,7 +1088,7 @@ namespace InstructionSwitcherCompanion
                 themeTransitionLayer.BringToFront();
                 themeTransitionLayer.Update();
             }
-            themeMode = themeMode == ThemeMode.Dark ? ThemeMode.Light : ThemeMode.Dark;
+            themeMode = requestedMode;
             ApplyThemeCore();
             if (animate)
             {
@@ -1131,11 +1123,6 @@ namespace InstructionSwitcherCompanion
             if (instructionSection != null) instructionSection.BackColor = palette.Window;
             if (profileList != null) profileList.BackColor = palette.Window;
             if (statusPanel != null) statusPanel.BackColor = palette.Surface;
-            if (themeButton != null)
-            {
-                themeButton.Glyph = themeMode == ThemeMode.Dark ? GlyphKind.Sun : GlyphKind.Moon;
-                tips.SetToolTip(themeButton, UiText.T(themeMode == ThemeMode.Dark ? "切换到白天模式" : "切换到黑夜模式"));
-            }
             if (presetMenu != null) CompanionTheme.ApplyToolStrip(presetMenu, themeMode);
             if (footerMenu != null) CompanionTheme.ApplyToolStrip(footerMenu, themeMode);
             if (trayMenu != null) CompanionTheme.ApplyToolStrip(trayMenu, themeMode);
@@ -1251,9 +1238,8 @@ namespace InstructionSwitcherCompanion
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add(UiText.T("显示面板"), null, delegate { ShowPreferred(CompanionViewMode.Expanded, true); });
             trayMenu.Items.Add(UiText.T("显示悬浮球"), null, delegate { ShowPreferred(CompanionViewMode.Bubble, true); });
+            trayMenu.Items.Add(UiText.T("设置"), null, OpenSettingsFromTray);
             trayMenu.Items.Add(UiText.T("隐藏"), null, delegate { HideForUser(); });
-            trayLanguageMenu = BuildLanguageMenu();
-            trayMenu.Items.Add(trayLanguageMenu);
             trayMenu.Items.Add(new ToolStripSeparator());
             trayMenu.Items.Add(UiText.T("退出"), null, delegate { ExitApplication(); });
             trayIcon = CreateTrayIcon();
@@ -1265,20 +1251,10 @@ namespace InstructionSwitcherCompanion
             CompanionTheme.ApplyToolStrip(trayMenu, themeMode);
         }
 
-        private ToolStripMenuItem BuildLanguageMenu()
+        private void OpenSettingsFromTray(object sender, EventArgs e)
         {
-            var language = new ToolStripMenuItem(UiText.T("语言"));
-            var chinese = new ToolStripMenuItem(UiText.T("中文")) {
-                Checked = UiText.Current == UiLanguage.Chinese
-            };
-            var english = new ToolStripMenuItem(UiText.T("英文")) {
-                Checked = UiText.Current == UiLanguage.English
-            };
-            chinese.Click += delegate { ChangeLanguage(UiLanguage.Chinese); };
-            english.Click += delegate { ChangeLanguage(UiLanguage.English); };
-            language.DropDownItems.Add(chinese);
-            language.DropDownItems.Add(english);
-            return language;
+            ShowPreferred(CompanionViewMode.Expanded, true);
+            BeginInvoke((MethodInvoker)delegate { OpenManager(null, EventArgs.Empty); });
         }
 
         private void ChangeLanguage(UiLanguage language)
@@ -1986,16 +1962,24 @@ namespace InstructionSwitcherCompanion
 
         private void OpenManager(object sender, EventArgs e)
         {
+            if (managerOpen) return;
             managerOpen = true;
-            TopMost = false;
             string importedPresetId = null;
+            bool settingsApplied = false;
+            UiLanguage requestedLanguage = UiText.Current;
+            ThemeMode requestedTheme = themeMode;
             try
             {
                 using (var manager = new LibraryManagerForm(configFile, Path.GetDirectoryName(configFile), stateRoot, themeMode))
                 {
                     manager.TopMost = true;
+                    manager.PrepareForModalDisplay();
+                    TopMost = false;
                     manager.ShowDialog(this);
                     importedPresetId = manager.ImportedPresetIdToApply;
+                    settingsApplied = manager.SettingsApplied;
+                    requestedLanguage = manager.RequestedLanguage;
+                    requestedTheme = manager.RequestedThemeMode;
                 }
             }
             finally
@@ -2012,6 +1996,11 @@ namespace InstructionSwitcherCompanion
                         PresetDto imported = (library.presets ?? new PresetDto[0]).FirstOrDefault(item =>
                             String.Equals(item.id, importedPresetId, StringComparison.Ordinal));
                         if (imported != null) ApplyPresetToCurrentTask(imported);
+                    }
+                    if (settingsApplied)
+                    {
+                        ChangeTheme(requestedTheme);
+                        ChangeLanguage(requestedLanguage);
                     }
                 }
             }
@@ -2939,17 +2928,6 @@ namespace InstructionSwitcherCompanion
                 TopMost = true;
         }
 
-        private void OpenConfigFolder()
-        {
-            string configRoot = Directory.GetParent(runtimeRoot).FullName;
-            Directory.CreateDirectory(configRoot);
-            Process.Start(new ProcessStartInfo {
-                FileName = "explorer.exe",
-                Arguments = "\"" + configRoot + "\"",
-                UseShellExecute = true
-            });
-        }
-
         private void ShowPreferred(CompanionViewMode mode, bool activate)
         {
             if (allowExit) return;
@@ -2961,14 +2939,25 @@ namespace InstructionSwitcherCompanion
 
             if (!Visible)
             {
-                ApplyInitialPlacementIfNeeded();
-                SetVisualMode(mode, false);
-                Rectangle placement = mode == CompanionViewMode.Bubble
-                    ? ResolvePlacement(windowPosition.bubble, Size, true)
-                    : ResolvePlacement(windowPosition.expanded, expandedWindowSize, false);
-                Location = placement.Location;
-                displayState = mode == CompanionViewMode.Bubble
-                    ? CompanionDisplayState.Bubble : CompanionDisplayState.Expanded;
+                SuspendLayout();
+                try
+                {
+                    ApplyInitialPlacementIfNeeded();
+                    SetVisualMode(mode, false);
+                    Rectangle placement = mode == CompanionViewMode.Bubble
+                        ? ResolvePlacement(windowPosition.bubble, Size, true)
+                        : ResolvePlacement(windowPosition.expanded, expandedWindowSize, false);
+                    Location = placement.Location;
+                    displayState = mode == CompanionViewMode.Bubble
+                        ? CompanionDisplayState.Bubble : CompanionDisplayState.Expanded;
+                    WindowState = FormWindowState.Normal;
+                    TopMost = true;
+                    CompanionTheme.ApplyWindow(this, themeMode);
+                }
+                finally
+                {
+                    ResumeLayout(true);
+                }
                 Show();
             }
             else if (mode == CompanionViewMode.Bubble && displayState == CompanionDisplayState.Expanded)

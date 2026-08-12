@@ -28,7 +28,7 @@ English documentation: [README.en.md](README.en.md)
 
 </div>
 
-这张图集中回答三个最重要的问题：面板正在控制哪个任务、当前启用了哪些指令、Hook 是否已经读取最新状态。示例中选中了“代码审查”预设，“严格审查”和“简洁输出”会按列表顺序应用到下一条消息。
+这张图集中回答三个最重要的问题：面板正在控制哪个任务、当前启用了哪些指令、Hook 是否已经读取最新状态。截图使用独立的合成演示库，内容不代表新安装的默认指令。
 
 ### 从选择预设到下一条消息生效
 
@@ -41,7 +41,7 @@ English documentation: [README.en.md](README.en.md)
 
 </div>
 
-动图对应一次完整操作：识别当前任务 → 选择“代码审查” → 查看启用顺序 → 打开“测试优先” → 等待 `Hook 已读取` → 收起为悬浮球。每一帧都使用合成任务数据，公开素材不包含本机路径、真实会话 ID 或聊天内容。
+动图对应一次完整操作：识别当前任务、选择配置预设、查看启用顺序、微调一条指令、等待 `Hook 已读取`、收起为悬浮球。每一帧都使用合成任务数据和演示指令库，公开素材不包含本机路径、真实会话 ID 或聊天内容。
 
 ## 一句话理解
 
@@ -127,8 +127,8 @@ Hook 负责可靠地读取和注入内容。伴随窗负责选择、排序和反
 
 ### 预设与指令库
 
-- 内置“严格审查”“测试优先”“简洁输出”等示例指令。
-- 将多个指令保存为“代码审查”“测试模式”等配置预设。
+- 新安装默认提供六条可编辑指令，内容与项目当前维护的默认工作方式一致。
+- 初始配置预设为空；用户可以按自己的工作流保存组合。
 - 拖动已启用指令，调整注入顺序。
 - 编辑 Markdown 正文、排序、导入、导出和备份。
 - 修改后的预设会显示为自定义配置，便于识别当前差异。
@@ -138,7 +138,7 @@ Hook 负责可靠地读取和注入内容。伴随窗负责选择、排序和反
 - `SessionStart` 自动启动，右下角置顶停靠。
 - 展开面板、悬浮球、系统托盘三种入口。
 - 深色与浅色主题，主题选择会保存。
-- 支持中文与英文界面，底部菜单和托盘菜单都可切换语言。
+- “设置”面板集中管理界面语言、主题和数据目录。
 - Codex 进入后台时自动抑制窗口，回到前台后恢复上次显示形态。
 - `Esc` 可以把面板收束为悬浮球，单击悬浮球恢复面板。
 
@@ -149,9 +149,9 @@ Hook 负责可靠地读取和注入内容。伴随窗负责选择、排序和反
 ```text
 /choose status
 /choose list
-/choose set review,tdd
-/choose on concise
-/choose off review
+/choose set <instruction-id-1>,<instruction-id-2>
+/choose on <instruction-id>
+/choose off <instruction-id>
 /choose clear
 ```
 
@@ -216,13 +216,13 @@ codex plugin add instruction-switcher@silly-codex
 3. 在“配置预设”里选择一个预设，或直接打开单条指令。
 4. 提交下一条普通消息，Hook 会读取当前任务的启用列表并注入对应 Markdown 正文。
 5. 需要专注编辑区时，点击右上角折叠按钮，保留悬浮球入口。
-6. 需要管理正文或备份时，打开“管理指令”或底部更多菜单。
+6. 点击“设置”，在同一窗口中管理指令库、配置预设、界面语言、主题和数据目录。
 
-首次运行会参考 Windows 界面语言。语言选择保存在窗口偏好中；切换界面语言会保留用户已有的指令名称、预设名称和 Markdown 正文。英文环境的全新指令库会使用英文示例内容。
+首次运行会参考 Windows 界面语言。语言和主题选择保存在窗口偏好中；切换界面语言会保留用户已有的指令名称、预设名称和 Markdown 正文。中英文新安装使用同一组六条默认正文，只切换显示名称。
 
 ### 一个具体例子
 
-代码审查任务可以选择“代码审查”预设，包含“严格审查”和“简洁输出”。切换到测试任务后，可以选择“测试模式”，启用“测试优先”和“简洁输出”。两个任务的开关和顺序分别保存，任务之间互不覆盖。
+你可以在一个任务里启用偏向直接执行和清晰沟通的指令，在另一个任务里保留不同组合。两个任务的开关和顺序分别保存，任务之间互不覆盖；常用组合可以随时另存为配置预设。
 
 ## 适配环境
 
@@ -241,7 +241,7 @@ codex plugin add instruction-switcher@silly-codex
 - 配置、指令正文、预设、导入导出文件和任务状态全部写入本机。
 - 伴随窗只连接 Codex 在回环地址提供的调试端口，用于识别当前选中的任务。
 - 项目不包含遥测、广告、远程账户服务和自动上传。
-- 导入、导出和打开配置目录都由用户主动触发。
+- 导入、导出和从“设置”打开数据目录都由用户主动触发。
 - 删除插件登记不会自动删除用户库；删除运行目录才会清除本地数据。
 
 默认数据目录：
@@ -290,6 +290,7 @@ node --test plugins/instruction-switcher/tests/*.test.mjs
 npm pack --dry-run --json
 powershell -NoProfile -File plugins/instruction-switcher/scripts/build-companion.ps1
 powershell -NoProfile -File plugins/instruction-switcher/tests/companion-lifecycle.test.ps1
+powershell -NoProfile -File plugins/instruction-switcher/tests/window-presentation.test.ps1
 powershell -NoProfile -File plugins/instruction-switcher/tests/library-package.test.ps1
 powershell -NoProfile -File plugins/instruction-switcher/tests/theme-transition-layer.test.ps1
 node scripts/validate-plugin.mjs

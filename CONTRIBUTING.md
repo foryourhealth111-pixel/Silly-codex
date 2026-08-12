@@ -8,6 +8,7 @@
 node --test plugins/instruction-switcher/tests/*.test.mjs
 powershell -NoProfile -File plugins/instruction-switcher/scripts/build-companion.ps1
 powershell -NoProfile -File plugins/instruction-switcher/tests/companion-lifecycle.test.ps1
+powershell -NoProfile -File plugins/instruction-switcher/tests/window-presentation.test.ps1
 powershell -NoProfile -File plugins/instruction-switcher/tests/library-package.test.ps1
 powershell -NoProfile -File plugins/instruction-switcher/tests/theme-transition-layer.test.ps1
 node scripts/validate-plugin.mjs

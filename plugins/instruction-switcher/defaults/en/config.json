@@ -4,48 +4,47 @@
   "defaultPresetId": null,
   "instructions": [
     {
-      "id": "review",
-      "name": "Strict review",
-      "file": "instructions/review.md",
-      "createdAt": "2026-08-10T00:00:00.000Z",
-      "updatedAt": "2026-08-10T00:00:00.000Z"
+      "id": "instruction-2cc9c0c6cd124b0698c6745c0e66a627",
+      "name": "Direct execution",
+      "file": "instructions/instruction-2cc9c0c6cd124b0698c6745c0e66a627.md",
+      "createdAt": "2026-08-11T02:37:32.7184961Z",
+      "updatedAt": "2026-08-12T01:31:32.4546777Z"
     },
     {
-      "id": "tdd",
-      "name": "Test first",
-      "file": "instructions/tdd.md",
-      "createdAt": "2026-08-10T00:00:00.000Z",
-      "updatedAt": "2026-08-10T00:00:00.000Z"
+      "id": "instruction-077f2a1d38c14a25a41c332e8e5420d0",
+      "name": "Anti-defensive programming",
+      "file": "instructions/instruction-077f2a1d38c14a25a41c332e8e5420d0.md",
+      "createdAt": "2026-08-11T02:40:05.9977394Z",
+      "updatedAt": "2026-08-12T01:31:37.6988143Z"
     },
     {
-      "id": "concise",
-      "name": "Concise responses",
-      "file": "instructions/concise.md",
-      "createdAt": "2026-08-10T00:00:00.000Z",
-      "updatedAt": "2026-08-10T00:00:00.000Z"
+      "id": "instruction-745d5dd085f54e3a97439569eb3171a0",
+      "name": "Skill discipline",
+      "file": "instructions/instruction-745d5dd085f54e3a97439569eb3171a0.md",
+      "createdAt": "2026-08-11T02:45:27.6662094Z",
+      "updatedAt": "2026-08-12T01:31:39.9475296Z"
+    },
+    {
+      "id": "instruction-df29bf05842045ae9db9cc104b0f676d",
+      "name": "User-facing communication",
+      "file": "instructions/instruction-df29bf05842045ae9db9cc104b0f676d.md",
+      "createdAt": "2026-08-11T02:53:06.4346487Z",
+      "updatedAt": "2026-08-12T01:31:13.1196505Z"
+    },
+    {
+      "id": "instruction-4632be1fa55f410da9e2d81b157cdf6b",
+      "name": "Cat girl persona",
+      "file": "instructions/instruction-4632be1fa55f410da9e2d81b157cdf6b.md",
+      "createdAt": "2026-08-11T13:08:39.1566092Z",
+      "updatedAt": "2026-08-12T07:31:39.9580126Z"
+    },
+    {
+      "id": "instruction-097b4e562a4e4d0d8b9f7c9d9e9117d2",
+      "name": "Efficient execution protocol",
+      "file": "instructions/instruction-097b4e562a4e4d0d8b9f7c9d9e9117d2.md",
+      "createdAt": "2026-08-12T01:31:05.4514671Z",
+      "updatedAt": "2026-08-12T07:32:36.5167815Z"
     }
   ],
-  "presets": [
-    {
-      "id": "preset-default",
-      "name": "Default",
-      "instructionIds": ["concise"],
-      "createdAt": "2026-08-10T00:00:00.000Z",
-      "updatedAt": "2026-08-10T00:00:00.000Z"
-    },
-    {
-      "id": "preset-code-review",
-      "name": "Code review",
-      "instructionIds": ["review", "concise"],
-      "createdAt": "2026-08-10T00:00:00.000Z",
-      "updatedAt": "2026-08-10T00:00:00.000Z"
-    },
-    {
-      "id": "preset-test-mode",
-      "name": "Test mode",
-      "instructionIds": ["tdd", "concise"],
-      "createdAt": "2026-08-10T00:00:00.000Z",
-      "updatedAt": "2026-08-10T00:00:00.000Z"
-    }
-  ]
+  "presets": []
 }

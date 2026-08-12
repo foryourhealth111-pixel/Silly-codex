@@ -336,32 +336,9 @@ function readLegacy(raw, root) {
   return { command: validateCommand(raw.command), profiles };
 }
 
-function seedPresets(validIds, now, language) {
-  const candidates = language === "en"
-    ? [
-      { id: "preset-default", name: "Default", instructionIds: ["concise"] },
-      { id: "preset-code-review", name: "Code review", instructionIds: ["review", "concise"] },
-      { id: "preset-test-mode", name: "Test mode", instructionIds: ["tdd", "concise"] },
-    ]
-    : [
-      { id: "preset-default", name: "默认", instructionIds: ["concise"] },
-      { id: "preset-code-review", name: "代码审查", instructionIds: ["review", "concise"] },
-      { id: "preset-test-mode", name: "测试模式", instructionIds: ["tdd", "concise"] },
-    ];
-  return candidates
-    .map((preset) => ({
-      ...preset,
-      instructionIds: preset.instructionIds.filter((id) => validIds.has(id)),
-      createdAt: now,
-      updatedAt: now,
-    }))
-    .filter((preset) => preset.instructionIds.length > 0);
-}
-
 async function migrateLegacy(raw, root) {
   const legacy = readLegacy(raw, root);
   const now = new Date().toISOString();
-  const language = await readUiLanguage(CONFIG_ROOT);
   const instructions = [];
   for (const profile of legacy.profiles) {
     const target = path.join(root, "instructions", `${profile.id}.md`);
@@ -384,7 +361,7 @@ async function migrateLegacy(raw, root) {
     command: legacy.command,
     defaultPresetId: null,
     instructions,
-    presets: seedPresets(new Set(instructions.map((item) => item.id)), now, language),
+    presets: [],
   };
   const normalized = normalizeV3(settings, root).settings;
   await writeJson(path.join(root, "config.json"), normalized);
@@ -417,7 +394,7 @@ async function localizedDefaultRoot() {
 
 async function installDefaults() {
   const selectedRoot = await localizedDefaultRoot();
-  const sourceRoot = path.join(selectedRoot, "instructions");
+  const sourceRoot = path.join(DEFAULT_ROOT, "instructions");
   const entries = await readdir(sourceRoot, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isFile()) continue;
@@ -432,7 +409,7 @@ async function installDefaults() {
 async function bundledSettings() {
   const selectedRoot = await localizedDefaultRoot();
   const raw = await readJson(path.join(selectedRoot, "config.json"));
-  return { root: selectedRoot, settings: normalizeV3(raw, selectedRoot).settings };
+  return { root: DEFAULT_ROOT, settings: normalizeV3(raw, DEFAULT_ROOT).settings };
 }
 
 async function prepareSettings() {

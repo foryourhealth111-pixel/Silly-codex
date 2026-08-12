@@ -75,7 +75,7 @@ codex plugin remove instruction-switcher@silly-codex
 
 伴随窗提供白天与黑夜两套主题。白天模式使用白色和浅灰，黑夜模式使用灰黑色；绿色、琥珀色和红色仅用于启用、等待和错误状态。主题选择会随窗口偏好保存。
 
-伴随窗支持中文与英文界面。底部更多菜单和托盘菜单都提供语言切换，选择会保存在 `runtime/window-position.json` 中。用户已有的指令名称、配置预设名称和 Markdown 正文保持原样。英文环境中首次创建的指令库会使用英文示例内容。
+伴随窗支持中文与英文界面。“设置”窗口集中提供语言、主题和数据目录选项，选择会保存在 `runtime/window-position.json` 中。用户已有的指令名称、配置预设名称和 Markdown 正文保持原样。中英文新安装使用同一组六条默认正文，只切换显示名称。
 
 右上角的折叠按钮会把完整面板收束为约 `58 × 58` 的悬浮球。单击悬浮球可恢复面板，拖动悬浮球可调整位置，按 `Esc` 也可从展开面板折叠。展开面板和悬浮球分别保存位置、显示器、停靠边和边距；显示器、DPI 或任务栏工作区变化后，窗口会自动限制在当前可用区域内。
 
@@ -86,9 +86,9 @@ codex plugin remove instruction-switcher@silly-codex
 - 直接应用配置预设，并在列表中微调单个指令项；
 - 在“启用指令”列表中拖动已启用项，直接调整当前任务的注入顺序；
 - 保存当前组合为新预设，或明确更新已有预设；
-- 打开指令库管理面板，编辑正文、排序、导入和导出；
+- 打开“设置”，管理指令库、配置预设、界面语言、主题和数据目录；
 - 显示状态已保存、等待读取或 Hook 已读取；
-- 打开用户配置目录。
+- 从“设置”打开用户数据目录。
 
 伴随窗通过 Codex 本机调试端口读取当前侧栏选择，并校验前台会话 ID 对应的 SHA-256 状态键。连续两次采样一致后，目标会自动切换，开关可以立即修改。新建任务尚未生成 Hook descriptor 时，伴随窗会从本地配置构造临时目标；首次消息提交时，Hook 会直接读取同一个会话键下的状态。
 
@@ -107,9 +107,9 @@ Codex 主窗口关闭约 15 秒后，伴随窗会自行退出；残留的 Electr
 ```text
 /choose status
 /choose list
-/choose set review,tdd
-/choose on concise
-/choose off review
+/choose set <instruction-id-1>,<instruction-id-2>
+/choose on <instruction-id>
+/choose off <instruction-id>
 /choose clear
 ```
 
@@ -131,7 +131,7 @@ Codex 主窗口关闭约 15 秒后，伴随窗会自行退出；残留的 Electr
 
 启用指令按任务状态中的有序 `enabled` 数组注入。伴随窗里已启用的行会显示左侧拖动手柄，拖动后立即保存当前任务顺序；未启用项排列在启用区之后。手动调整顺序后，配置预设选择器会显示“自定义配置”。
 
-初始指令项和示例预设属于用户库内容。升级过程保留用户正文和已有配置，用户可以编辑或删除初始内容。
+新安装默认包含六条可编辑指令，不附带配置预设。升级过程保留用户正文和已有配置，用户可以编辑或删除初始内容。
 
 管理面板使用统一的“导入包…”入口，并自动识别指令包、配置预设包和旧版整库文件。指令包中的条目默认显示在自定义列表；配置预设包会携带完整依赖指令，这些随包指令默认隐藏，管理面板始终可以检索，当前任务启用后也会出现在主面板。指令页和配置预设页分别提供上下文导出；更多菜单提供整库备份与恢复。
 
@@ -145,7 +145,9 @@ Codex 主窗口关闭约 15 秒后，伴随窗会自行退出；残留的 Electr
 powershell -NoProfile -File scripts/build-companion.ps1
 node --test tests/*.test.mjs
 powershell -NoProfile -File tests/companion-lifecycle.test.ps1
+powershell -NoProfile -File tests/window-presentation.test.ps1
 powershell -NoProfile -File tests/library-package.test.ps1
+powershell -NoProfile -File tests/theme-transition-layer.test.ps1
 pwsh -NoProfile -File tests/focus-regression.ps1
 ```
 

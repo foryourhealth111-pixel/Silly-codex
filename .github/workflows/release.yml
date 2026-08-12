@@ -59,6 +59,9 @@ jobs:
           .\plugins\instruction-switcher\scripts\build-companion.ps1 -OutputPath ".\artifacts\unsigned\InstructionSwitcherCompanion.exe"
       - name: Test companion lifecycle
         run: .\plugins\instruction-switcher\tests\companion-lifecycle.test.ps1 -AssemblyPath ".\artifacts\unsigned\InstructionSwitcherCompanion.exe"
+
+      - name: Test window presentation
+        run: .\plugins\instruction-switcher\tests\window-presentation.test.ps1 -AssemblyPath ".\artifacts\unsigned\InstructionSwitcherCompanion.exe"
       - name: Test library packages
         run: .\plugins\instruction-switcher\tests\library-package.test.ps1 -AssemblyPath ".\artifacts\unsigned\InstructionSwitcherCompanion.exe"
       - name: Test theme transition layer
