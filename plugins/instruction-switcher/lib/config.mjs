@@ -15,6 +15,7 @@ import { randomUUID } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readUiLanguage } from "./ui-language.mjs";
 
 export const CONFIG_VERSION = 3;
 export const PLUGIN_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -335,12 +336,18 @@ function readLegacy(raw, root) {
   return { command: validateCommand(raw.command), profiles };
 }
 
-function seedPresets(validIds, now) {
-  const candidates = [
-    { id: "preset-default", name: "默认", instructionIds: ["concise"] },
-    { id: "preset-code-review", name: "代码审查", instructionIds: ["review", "concise"] },
-    { id: "preset-test-mode", name: "测试模式", instructionIds: ["tdd", "concise"] },
-  ];
+function seedPresets(validIds, now, language) {
+  const candidates = language === "en"
+    ? [
+      { id: "preset-default", name: "Default", instructionIds: ["concise"] },
+      { id: "preset-code-review", name: "Code review", instructionIds: ["review", "concise"] },
+      { id: "preset-test-mode", name: "Test mode", instructionIds: ["tdd", "concise"] },
+    ]
+    : [
+      { id: "preset-default", name: "默认", instructionIds: ["concise"] },
+      { id: "preset-code-review", name: "代码审查", instructionIds: ["review", "concise"] },
+      { id: "preset-test-mode", name: "测试模式", instructionIds: ["tdd", "concise"] },
+    ];
   return candidates
     .map((preset) => ({
       ...preset,
@@ -354,6 +361,7 @@ function seedPresets(validIds, now) {
 async function migrateLegacy(raw, root) {
   const legacy = readLegacy(raw, root);
   const now = new Date().toISOString();
+  const language = await readUiLanguage(CONFIG_ROOT);
   const instructions = [];
   for (const profile of legacy.profiles) {
     const target = path.join(root, "instructions", `${profile.id}.md`);
@@ -376,7 +384,7 @@ async function migrateLegacy(raw, root) {
     command: legacy.command,
     defaultPresetId: null,
     instructions,
-    presets: seedPresets(new Set(instructions.map((item) => item.id)), now),
+    presets: seedPresets(new Set(instructions.map((item) => item.id)), now, language),
   };
   const normalized = normalizeV3(settings, root).settings;
   await writeJson(path.join(root, "config.json"), normalized);
@@ -401,22 +409,30 @@ function legacyRuntimeSettings(raw, root) {
   };
 }
 
+async function localizedDefaultRoot() {
+  return (await readUiLanguage(CONFIG_ROOT)) === "en"
+    ? path.join(DEFAULT_ROOT, "en")
+    : DEFAULT_ROOT;
+}
+
 async function installDefaults() {
-  const sourceRoot = path.join(DEFAULT_ROOT, "instructions");
+  const selectedRoot = await localizedDefaultRoot();
+  const sourceRoot = path.join(selectedRoot, "instructions");
   const entries = await readdir(sourceRoot, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isFile()) continue;
     await copyOnce(path.join(sourceRoot, entry.name), path.join(INSTRUCTION_ROOT, entry.name));
   }
-  const raw = await readJson(path.join(DEFAULT_ROOT, "config.json"));
+  const raw = await readJson(path.join(selectedRoot, "config.json"));
   const settings = normalizeV3(raw, CONFIG_ROOT).settings;
   await writeJson(CONFIG_FILE, settings);
   return settings;
 }
 
 async function bundledSettings() {
-  const raw = await readJson(path.join(DEFAULT_ROOT, "config.json"));
-  return normalizeV3(raw, DEFAULT_ROOT).settings;
+  const selectedRoot = await localizedDefaultRoot();
+  const raw = await readJson(path.join(selectedRoot, "config.json"));
+  return { root: selectedRoot, settings: normalizeV3(raw, selectedRoot).settings };
 }
 
 async function prepareSettings() {
@@ -458,7 +474,8 @@ async function prepareSettings() {
   } catch (error) {
     if (await exists(CONFIG_FILE).catch(() => true)) throw error;
     process.stderr.write(`instruction-switcher: using bundled defaults (${error.message})\n`);
-    return { root: DEFAULT_ROOT, settings: await bundledSettings(), legacy: false };
+    const bundled = await bundledSettings();
+    return { root: bundled.root, settings: bundled.settings, legacy: false };
   }
 }
 

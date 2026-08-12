@@ -17,15 +17,15 @@
   ],
   "interface": {
     "displayName": "Instruction Switcher",
-    "shortDescription": "\u4e3a\u6bcf\u4e2a\u5bf9\u8bdd\u72ec\u7acb\u9009\u62e9\u9884\u8bbe\u6307\u4ee4\u3002",
-    "longDescription": "\u901a\u8fc7\u4f1a\u8bdd\u7ea7 Hook \u548c\u53ef\u89c6\u5316\u5f00\u5173\uff0c\u4e3a\u6bcf\u4e2a Codex \u5bf9\u8bdd\u72ec\u7acb\u9009\u62e9\u5e76\u5e94\u7528\u7528\u6237\u9884\u8bbe\u6307\u4ee4\u3002",
+    "shortDescription": "Switch reusable instructions independently for each Codex task.",
+    "longDescription": "Use task-level hooks and a Windows companion to select, order, and apply reusable instructions independently in every Codex task.",
     "developerName": "foryourhealth111-pixel",
     "category": "Productivity",
     "capabilities": [
       "Interactive"
     ],
-    "defaultPrompt": "\u6253\u5f00\u8fd9\u4e2a\u5bf9\u8bdd\u7684\u6307\u4ee4\u5f00\u5173\u9762\u677f\u3002",
-    "websiteURL": "https://github.com/foryourhealth111-pixel/Silly-codex",
+    "defaultPrompt": "Open the instruction switcher for this task.",
+    "websiteURL": "https://github.com/foryourhealth111-pixel/Silly-codex/blob/main/README.en.md",
     "privacyPolicyURL": "https://github.com/foryourhealth111-pixel/Silly-codex/blob/main/PRIVACY.md"
   }
 }

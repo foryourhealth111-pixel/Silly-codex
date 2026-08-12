@@ -1,5 +1,6 @@
-import { loadSettings } from "../lib/config.mjs";
+import { CONFIG_ROOT, loadSettings } from "../lib/config.mjs";
 import { launchCompanion } from "../lib/companion.mjs";
+import { readUiLanguage } from "../lib/ui-language.mjs";
 import {
   acknowledgeState,
   isSubagentEvent,
@@ -52,21 +53,23 @@ function ordered(ids, instructions) {
   return ids.filter((id) => available.has(id) && !seen.has(id) && (seen.add(id), true));
 }
 
-function names(ids, instructions) {
+function names(ids, instructions, language) {
   const labels = new Map(instructions.map((instruction) => [instruction.id, instruction.name]));
   const selected = ids.map((id) => labels.get(id)).filter(Boolean);
-  return selected.length ? selected.join("、") : "无";
+  return selected.length ? selected.join(language === "en" ? ", " : "、") : language === "en" ? "None" : "无";
 }
 
-function presetLabel(id, settings) {
-  return presetsOf(settings).find((preset) => preset.id === id)?.name || "自定义";
+function presetLabel(id, settings, language) {
+  return presetsOf(settings).find((preset) => preset.id === id)?.name || (language === "en" ? "Custom" : "自定义");
 }
 
-function usage(command) {
-  return `用法：${command} preset <预设ID>；${command} set review,tdd；${command} on review；${command} off review；${command} clear；${command} status`;
+function usage(command, language) {
+  return language === "en"
+    ? `Usage: ${command} preset <preset-id>; ${command} set review,tdd; ${command} on review; ${command} off review; ${command} clear; ${command} status`
+    : `用法：${command} preset <预设ID>；${command} set review,tdd；${command} on review；${command} off review；${command} clear；${command} status`;
 }
 
-async function handleControl(control, sessionId, settings, state) {
+async function handleControl(control, sessionId, settings, state, language) {
   const command = settings.command;
   const instructions = instructionsOf(settings);
   const presets = presetsOf(settings);
@@ -74,42 +77,44 @@ async function handleControl(control, sessionId, settings, state) {
   const enabled = state.enabled;
 
   if (state.status === "error") {
-    return block("任务状态读取失败，配置未改变。请检查状态文件后重试。");
+    return block(language === "en" ? "Task state could not be read. No changes were made. Check the state file and retry." : "任务状态读取失败，配置未改变。请检查状态文件后重试。");
   }
 
   if (control.verb === "status") {
-    if (control.ids.length) return block(`用法：${command} status`);
-    const presetText = state.activePresetId ? ` · 配置：${presetLabel(state.activePresetId, settings)}` : " · 自定义配置";
-    return block(`当前启用：${names(enabled, instructions)}${presetText}`);
+    if (control.ids.length) return block(language === "en" ? `Usage: ${command} status` : `用法：${command} status`);
+    const presetText = state.activePresetId
+      ? language === "en" ? ` · Preset: ${presetLabel(state.activePresetId, settings, language)}` : ` · 配置：${presetLabel(state.activePresetId, settings, language)}`
+      : language === "en" ? " · Custom selection" : " · 自定义配置";
+    return block(language === "en" ? `Enabled: ${names(enabled, instructions, language)}${presetText}` : `当前启用：${names(enabled, instructions, language)}${presetText}`);
   }
   if (control.verb === "list") {
-    if (control.ids.length) return block(`用法：${command} list`);
+    if (control.ids.length) return block(language === "en" ? `Usage: ${command} list` : `用法：${command} list`);
     const selected = new Set(enabled);
     const itemText = instructions.map((instruction) =>
-      `${instruction.id}${selected.has(instruction.id) ? "（已启用）" : ""}`).join("、");
-    const presetText = presets.map((preset) => `${preset.id}（${preset.name}）`).join("、");
-    return block(`可用指令：${itemText || "无"}；配置预设：${presetText || "无"}`);
+      `${instruction.id}${selected.has(instruction.id) ? (language === "en" ? " (enabled)" : "（已启用）") : ""}`).join(language === "en" ? ", " : "、");
+    const presetText = presets.map((preset) => language === "en" ? `${preset.id} (${preset.name})` : `${preset.id}（${preset.name}）`).join(language === "en" ? ", " : "、");
+    return block(language === "en" ? `Available instructions: ${itemText || "None"}; presets: ${presetText || "None"}` : `可用指令：${itemText || "无"}；配置预设：${presetText || "无"}`);
   }
-  if (control.verb === "help") return block(usage(command));
+  if (control.verb === "help") return block(usage(command, language));
 
   if (control.verb === "preset" || control.verb === "apply") {
-    if (control.ids.length !== 1) return block(usage(command));
+    if (control.ids.length !== 1) return block(usage(command, language));
     const preset = presets.find((item) => item.id === control.ids[0]);
-    if (!preset) return block(`未知配置预设：${control.ids[0]}`);
+    if (!preset) return block(language === "en" ? `Unknown preset: ${control.ids[0]}` : `未知配置预设：${control.ids[0]}`);
     const next = ordered(preset.instructionIds, instructions);
     try {
       await writeEnabled(sessionId, next, state.revision, settings, preset.id);
-      return block(`已应用配置预设“${preset.name}”：${names(next, instructions)}`);
+      return block(language === "en" ? `Applied preset "${preset.name}": ${names(next, instructions, language)}` : `已应用配置预设“${preset.name}”：${names(next, instructions, language)}`);
     } catch (error) {
       const reason = error?.code === "ESTATECONFLICT"
-        ? "任务状态已在其他窗口更新，请重试。"
-        : `保存失败，配置未改变：${error.message}`;
+        ? (language === "en" ? "Task state changed in another window. Retry." : "任务状态已在其他窗口更新，请重试。")
+        : (language === "en" ? `Save failed. No changes were made: ${error.message}` : `保存失败，配置未改变：${error.message}`);
       return block(reason);
     }
   }
 
   const bad = control.ids.filter((id) => !validIds.has(id));
-  if (bad.length) return block(`未知指令项：${bad.join("、")}`);
+  if (bad.length) return block(language === "en" ? `Unknown instructions: ${bad.join(", ")}` : `未知指令项：${bad.join("、")}`);
 
   let next;
   if (control.verb === "clear" && control.ids.length === 0) next = [];
@@ -119,18 +124,19 @@ async function handleControl(control, sessionId, settings, state) {
     const removed = new Set(control.ids);
     next = enabled.filter((id) => !removed.has(id));
   }
-  if (!next) return block(usage(command));
+  if (!next) return block(usage(command, language));
 
   try {
     await writeEnabled(sessionId, next, state.revision, settings);
-    return block(`已启用：${names(next, instructions)} · ${presetLabel(
+    const label = presetLabel(
       presets.find((preset) => JSON.stringify(preset.instructionIds) === JSON.stringify(next))?.id,
-      settings,
-    )}`);
+      settings, language,
+    );
+    return block(language === "en" ? `Enabled: ${names(next, instructions, language)} · ${label}` : `已启用：${names(next, instructions, language)} · ${label}`);
   } catch (error) {
     const reason = error?.code === "ESTATECONFLICT"
-      ? "任务状态已在其他窗口更新，请重试。"
-      : `保存失败，配置未改变：${error.message}`;
+      ? (language === "en" ? "Task state changed in another window. Retry." : "任务状态已在其他窗口更新，请重试。")
+      : (language === "en" ? `Save failed. No changes were made: ${error.message}` : `保存失败，配置未改变：${error.message}`);
     return block(reason);
   }
 }
@@ -176,15 +182,16 @@ try {
   const prompt = typeof input?.prompt === "string" ? input.prompt : "";
   const sessionId = typeof input?.session_id === "string" ? input.session_id : "";
   const settings = await loadSettings();
+  const language = await readUiLanguage(CONFIG_ROOT);
   const control = parseControl(prompt, settings.command);
 
   if (!sessionId) {
-    emit(control ? block("无法识别当前对话，配置未改变。") : {});
+    emit(control ? block(language === "en" ? "The current conversation could not be identified. No changes were made." : "无法识别当前对话，配置未改变。") : {});
   } else {
     const state = await readSessionState(sessionId, settings);
     await refreshCompanion(input, settings);
     if (control) {
-      emit(await handleControl(control, sessionId, settings, state));
+      emit(await handleControl(control, sessionId, settings, state, language));
     } else if (state.status === "error") {
       emit({});
     } else {

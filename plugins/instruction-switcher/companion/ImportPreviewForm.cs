@@ -47,7 +47,7 @@ namespace InstructionSwitcherCompanion
             if (plan == null) throw new ArgumentNullException("plan");
             this.plan = plan;
             this.themeMode = themeMode;
-            Text = plan.replaceLibrary ? "恢复指令库备份" : "导入包预览";
+            Text = UiText.T(plan.replaceLibrary ? "恢复指令库备份" : "导入包预览");
             ClientSize = new Size(780, 610);
             MinimumSize = new Size(700, 540);
             StartPosition = FormStartPosition.CenterParent;
@@ -70,9 +70,9 @@ namespace InstructionSwitcherCompanion
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 112F));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
 
-            string kind = plan.document.kind == PackageKinds.Preset ? "配置预设包" :
-                plan.document.kind == PackageKinds.Instruction ? "指令包" :
-                plan.document.kind == PackageKinds.Backup ? "整库备份" : "旧版指令库包";
+            string kind = plan.document.kind == PackageKinds.Preset ? UiText.T("配置预设包") :
+                plan.document.kind == PackageKinds.Instruction ? UiText.T("指令包") :
+                plan.document.kind == PackageKinds.Backup ? UiText.T("整库备份") : UiText.T("旧版指令库包");
             var header = new ThemedLabel {
                 Dock = DockStyle.Fill,
                 Text = plan.document.name + "\r\n" + kind,
@@ -106,7 +106,7 @@ namespace InstructionSwitcherCompanion
             };
             showDependencies = new CheckBox {
                 AutoSize = true,
-                Text = "将随包指令显示在自定义列表",
+                Text = UiText.T("将随包指令显示在自定义列表"),
                 Checked = plan.showPresetInstructions,
                 Visible = plan.document.kind == PackageKinds.Preset,
                 Margin = new Padding(0, 3, 22, 0)
@@ -114,7 +114,7 @@ namespace InstructionSwitcherCompanion
             showDependencies.CheckedChanged += delegate { plan.showPresetInstructions = showDependencies.Checked; };
             applyToCurrentTask = new CheckBox {
                 AutoSize = true,
-                Text = "导入后应用到当前任务",
+                Text = UiText.T("导入后应用到当前任务"),
                 Checked = false,
                 Visible = canApplyPreset,
                 Margin = new Padding(0, 3, 0, 0)
@@ -126,7 +126,7 @@ namespace InstructionSwitcherCompanion
             {
                 primaryOptions.Controls.Add(new ThemedLabel {
                     AutoSize = true,
-                    Text = "恢复会替换当前指令库与配置预设",
+                    Text = UiText.T("恢复会替换当前指令库与配置预设"),
                     ThemeMode = themeMode,
                     Role = ThemedLabelRole.Warning,
                     Margin = new Padding(0, 5, 0, 0)
@@ -146,7 +146,7 @@ namespace InstructionSwitcherCompanion
                 AutoSize = false,
                 Width = 108,
                 Height = 28,
-                Text = "应用配置预设",
+                Text = UiText.T("应用配置预设"),
                 ThemeMode = themeMode,
                 Role = ThemedLabelRole.Secondary,
                 TextAlign = ContentAlignment.MiddleLeft,
@@ -177,18 +177,18 @@ namespace InstructionSwitcherCompanion
                 EditMode = DataGridViewEditMode.EditOnEnter
             };
             grid.Columns.Add(new DataGridViewTextBoxColumn {
-                HeaderText = "项目",
+                HeaderText = UiText.T("项目"),
                 ReadOnly = true,
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
                 FillWeight = 55F
             });
             grid.Columns.Add(new DataGridViewTextBoxColumn {
-                HeaderText = "判断",
+                HeaderText = UiText.T("判断"),
                 ReadOnly = true,
                 Width = 150
             });
             grid.Columns.Add(new DataGridViewTextBoxColumn {
-                HeaderText = "处理",
+                HeaderText = UiText.T("处理"),
                 ReadOnly = false,
                 Width = 130
             });
@@ -202,7 +202,7 @@ namespace InstructionSwitcherCompanion
 
             var detailHeading = new ThemedLabel {
                 Dock = DockStyle.Fill,
-                Text = "内容预览",
+                Text = UiText.T("内容预览"),
                 ThemeMode = themeMode,
                 TextAlign = ContentAlignment.BottomLeft
             };
@@ -221,7 +221,7 @@ namespace InstructionSwitcherCompanion
                 Padding = new Padding(0, 8, 0, 0)
             };
             var confirm = new ThemedButton {
-                Text = plan.replaceLibrary ? "恢复备份" : "导入",
+                Text = UiText.T(plan.replaceLibrary ? "恢复备份" : "导入"),
                 Width = 100,
                 Height = 32,
                 ThemeMode = themeMode,
@@ -230,7 +230,7 @@ namespace InstructionSwitcherCompanion
             };
             confirm.Click += ConfirmImport;
             var cancel = new ThemedButton {
-                Text = "取消",
+                Text = UiText.T("取消"),
                 Width = 86,
                 Height = 32,
                 ThemeMode = themeMode,
@@ -261,12 +261,13 @@ namespace InstructionSwitcherCompanion
             foreach (ImportInstructionPlanItem item in plan.instructions ?? new ImportInstructionPlanItem[0])
                 AddRow(item.name, item.status, item.selectedAction, item.allowedActions, item);
             foreach (ImportPresetPlanItem item in plan.presets ?? new ImportPresetPlanItem[0])
-                AddRow(item.name + "（配置预设）", item.status, item.selectedAction, item.allowedActions, item);
+                AddRow(item.name + (UiText.IsEnglish ? " (preset)" : "（配置预设）"),
+                    item.status, item.selectedAction, item.allowedActions, item);
         }
 
         private void AddRow(string name, string status, string action, string[] allowed, object tag)
         {
-            int index = grid.Rows.Add(name, status, PackageExchange.ActionLabel(action));
+            int index = grid.Rows.Add(name, UiText.Error(status), PackageExchange.ActionLabel(action));
             DataGridViewRow row = grid.Rows[index];
             row.Tag = tag;
             if ((allowed ?? new string[0]).Length <= 1)
@@ -361,10 +362,15 @@ namespace InstructionSwitcherCompanion
             int conflict = (plan.instructions ?? new ImportInstructionPlanItem[0]).Count(item => item.conflict) +
                 (plan.presets ?? new ImportPresetPlanItem[0]).Count(item => item.conflict);
             if (plan.replaceLibrary)
-                summary.Text = "恢复 " + (plan.instructions ?? new ImportInstructionPlanItem[0]).Length + " 条指令 · " +
-                    (plan.presets ?? new ImportPresetPlanItem[0]).Length + " 个配置预设";
+                summary.Text = UiText.IsEnglish
+                    ? "Restore " + (plan.instructions ?? new ImportInstructionPlanItem[0]).Length + " instructions · " +
+                        (plan.presets ?? new ImportPresetPlanItem[0]).Length + " presets"
+                    : "恢复 " + (plan.instructions ?? new ImportInstructionPlanItem[0]).Length + " 条指令 · " +
+                        (plan.presets ?? new ImportPresetPlanItem[0]).Length + " 个配置预设";
             else
-                summary.Text = "新增 " + create + " · 复用 " + reuse + " · 更新 " + update + " · 冲突 " + conflict;
+                summary.Text = UiText.IsEnglish
+                    ? "Create " + create + " · Reuse " + reuse + " · Update " + update + " · Conflicts " + conflict
+                    : "新增 " + create + " · 复用 " + reuse + " · 更新 " + update + " · 冲突 " + conflict;
         }
 
         private void RefreshDetail()
@@ -378,7 +384,7 @@ namespace InstructionSwitcherCompanion
             ImportInstructionPlanItem instruction = tag as ImportInstructionPlanItem;
             if (instruction != null)
             {
-                detail.Text = instruction.name + "\r\n" + instruction.detail + "\r\n\r\n" +
+                detail.Text = instruction.name + "\r\n" + UiText.Error(instruction.detail) + "\r\n\r\n" +
                     (instruction.incoming.content ?? "");
                 return;
             }
@@ -389,7 +395,7 @@ namespace InstructionSwitcherCompanion
                     .FirstOrDefault(candidate => String.Equals(candidate.packageKey, key, StringComparison.Ordinal));
                 return item == null ? key : item.name;
             }).ToArray();
-            detail.Text = preset.name + "\r\n" + preset.detail + "\r\n\r\n" + String.Join("\r\n", names);
+            detail.Text = preset.name + "\r\n" + UiText.Error(preset.detail) + "\r\n\r\n" + String.Join("\r\n", names);
         }
 
         private void ConfirmImport(object sender, EventArgs e)
@@ -397,14 +403,14 @@ namespace InstructionSwitcherCompanion
             plan.showPresetInstructions = showDependencies.Checked;
             if (ApplyToCurrentTask && PresetKeyToApply == null)
             {
-                MessageBox.Show(this, "请选择导入后要应用的配置预设。", "请选择配置预设",
+                MessageBox.Show(this, UiText.IsEnglish ? "Select the preset to apply after import." : "请选择导入后要应用的配置预设。", UiText.T("选择配置预设"),
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             string error = PackageExchange.ValidatePlan(plan);
             if (error != null)
             {
-                MessageBox.Show(this, error, "无法导入", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, UiText.Error(error), UiText.IsEnglish ? "Import unavailable" : "无法导入", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             DialogResult = DialogResult.OK;

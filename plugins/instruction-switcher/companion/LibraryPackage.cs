@@ -234,7 +234,7 @@ namespace InstructionSwitcherCompanion
                 schemaVersion = SchemaVersion,
                 kind = PackageKinds.Backup,
                 packageId = "backup-" + Guid.NewGuid().ToString("N"),
-                name = "Instruction Switcher 指令库备份",
+                name = UiText.IsEnglish ? "Instruction Switcher Library Backup" : "Instruction Switcher 指令库备份",
                 exportedAt = DateTime.UtcNow.ToString("o"),
                 command = settings.command,
                 defaultPresetKey = settings.defaultPresetId,
@@ -343,12 +343,12 @@ namespace InstructionSwitcherCompanion
 
         public static string ActionLabel(string action)
         {
-            if (action == ImportActions.Create) return "新增";
-            if (action == ImportActions.Reuse) return "复用本地";
-            if (action == ImportActions.Update) return "更新本地";
-            if (action == ImportActions.Copy) return "创建副本";
-            if (action == ImportActions.Skip) return "跳过";
-            if (action == ImportActions.Replace) return "恢复";
+            if (action == ImportActions.Create) return UiText.T("新增");
+            if (action == ImportActions.Reuse) return UiText.T("复用本地");
+            if (action == ImportActions.Update) return UiText.T("更新本地");
+            if (action == ImportActions.Copy) return UiText.T("创建副本");
+            if (action == ImportActions.Skip) return UiText.T("跳过");
+            if (action == ImportActions.Replace) return UiText.T("恢复");
             return action ?? "";
         }
 
@@ -744,7 +744,7 @@ namespace InstructionSwitcherCompanion
                 schemaVersion = SchemaVersion,
                 kind = PackageKinds.Legacy,
                 packageId = "legacy-" + BodyHash(json).Substring(0, 20),
-                name = "旧版指令库包",
+                name = UiText.T("旧版指令库包"),
                 exportedAt = String.IsNullOrWhiteSpace(legacy.exportedAt) ? DateTime.UtcNow.ToString("o") : legacy.exportedAt,
                 defaultPresetKey = legacy.defaultPresetId,
                 instructions = legacy.instructions.Select(item => new PackageInstructionDto {
@@ -901,9 +901,10 @@ namespace InstructionSwitcherCompanion
         {
             var used = new HashSet<string>(names ?? new string[0], StringComparer.CurrentCultureIgnoreCase);
             if (!used.Contains(requested)) return requested;
-            string candidate = requested + "（导入）";
+            string candidate = requested + (UiText.IsEnglish ? " (imported)" : "（导入）");
             int suffix = 2;
-            while (used.Contains(candidate)) candidate = requested + "（导入 " + suffix++ + "）";
+            while (used.Contains(candidate)) candidate = requested +
+                (UiText.IsEnglish ? " (imported " + suffix++ + ")" : "（导入 " + suffix++ + "）");
             return candidate;
         }
 

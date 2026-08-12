@@ -19,6 +19,7 @@
   "files": [
     "scripts/install-silly-codex.mjs",
     "README.md",
+    "README.en.md",
     "LICENSE",
     "NOTICE"
   ],

@@ -87,12 +87,18 @@ for (const relativePath of [
   "hooks/session-start.mjs",
   "hooks/prompt-submit.mjs",
   "lib/config.mjs",
+  "lib/ui-language.mjs",
   "lib/session-state.mjs",
   "lib/companion.mjs",
   "companion/InstructionSwitcherCompanion.exe",
   "companion/AssemblyInfo.cs",
   "companion/focus-tracker.mjs",
   "defaults/config.json",
+  "defaults/en/config.json",
+  "defaults/en/instructions/review.md",
+  "defaults/en/instructions/tdd.md",
+  "defaults/en/instructions/concise.md",
+  "README.en.md",
 ]) {
   if (!(await exists(relativePath))) errors.push(`required file is missing: ${relativePath}`);
 }

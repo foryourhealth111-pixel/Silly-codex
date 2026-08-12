@@ -35,6 +35,7 @@ namespace InstructionSwitcherCompanion
         [STAThread]
         private static void Main(string[] args)
         {
+            CompanionArguments.WaitForRestartSource(args);
             string runtimeRoot = CompanionArguments.ResolveRuntimeRoot(args);
             runtimeRoot = PathHelpers.NormalizeDirectory(runtimeRoot);
             Directory.CreateDirectory(runtimeRoot);
@@ -63,11 +64,32 @@ namespace InstructionSwitcherCompanion
 
     internal static class CompanionArguments
     {
+        private const string RestartSwitch = "--restart-after";
+
+        public static void WaitForRestartSource(string[] args)
+        {
+            if (args.Length < 3 || !String.Equals(args[0], RestartSwitch,
+                StringComparison.OrdinalIgnoreCase)) return;
+            int processId;
+            if (!Int32.TryParse(args[1], NumberStyles.Integer, CultureInfo.InvariantCulture,
+                out processId) || processId <= 0) return;
+            try
+            {
+                using (Process source = Process.GetProcessById(processId))
+                    source.WaitForExit(5000);
+            }
+            catch
+            {
+                // The source process may already be gone.
+            }
+        }
+
         public static string ResolveRuntimeRoot(string[] args)
         {
             // Older installations may still pass --watch before the runtime root.
             int runtimeArgument = args.Length > 0 &&
-                String.Equals(args[0], "--watch", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+                String.Equals(args[0], RestartSwitch, StringComparison.OrdinalIgnoreCase) ? 2 :
+                args.Length > 0 && String.Equals(args[0], "--watch", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
             return args.Length > runtimeArgument
                 ? Path.GetFullPath(args[runtimeArgument])
                 : Path.Combine(
@@ -246,6 +268,7 @@ namespace InstructionSwitcherCompanion
         public int y { get; set; }
         public string theme { get; set; }
         public string view { get; set; }
+        public string language { get; set; }
         public WindowPlacement expanded { get; set; }
         public WindowPlacement bubble { get; set; }
     }
@@ -299,7 +322,7 @@ namespace InstructionSwitcherCompanion
                 DateTimeStyles.RoundtripKind,
                 out updated)
                 ? updated.ToLocalTime().ToString("MM-dd HH:mm")
-                : "时间未知";
+                : UiText.T("时间未知");
             return project + "  ·  " + timestamp + "  ·  " + shortKey;
         }
     }
@@ -317,7 +340,7 @@ namespace InstructionSwitcherCompanion
 
         public override string ToString()
         {
-            return Preset == null ? (label ?? "自定义") : Preset.name;
+            return Preset == null ? (label ?? UiText.T("自定义")) : Preset.name;
         }
     }
 
@@ -372,6 +395,8 @@ namespace InstructionSwitcherCompanion
         private ContextMenuStrip trayMenu;
         private ContextMenuStrip presetMenu;
         private ContextMenuStrip footerMenu;
+        private ToolStripMenuItem footerLanguageMenu;
+        private ToolStripMenuItem trayLanguageMenu;
         private readonly System.Windows.Forms.Timer transitionTimer = new System.Windows.Forms.Timer();
         private readonly System.Windows.Forms.Timer themeTimer = new System.Windows.Forms.Timer();
         private string activeKey;
@@ -511,6 +536,7 @@ namespace InstructionSwitcherCompanion
             Directory.CreateDirectory(stateRoot);
 
             LoadWindowPreferences();
+            UiText.Current = UiText.Parse(windowPosition.language);
             BuildWindow();
             BuildTray();
             RefreshLibrary();
@@ -567,7 +593,7 @@ namespace InstructionSwitcherCompanion
                 ExpandFromBubble();
                 e.Handled = true;
             };
-            tips.SetToolTip(bubbleSurface, "展开指令面板");
+            tips.SetToolTip(bubbleSurface, UiText.T("展开指令面板"));
 
             headerPanel = new Panel { Dock = DockStyle.Top, Height = 62 };
             var brand = new ThemedButton {
@@ -598,7 +624,7 @@ namespace InstructionSwitcherCompanion
                 TabStop = false
             };
             collapseButton.Click += delegate { CollapseToBubble(); };
-            tips.SetToolTip(collapseButton, "折叠为悬浮球");
+            tips.SetToolTip(collapseButton, UiText.T("折叠为悬浮球"));
             AttachDrag(headerPanel);
             AttachDrag(brand);
             AttachDrag(title);
@@ -614,9 +640,9 @@ namespace InstructionSwitcherCompanion
 
             var body = new Panel { Dock = DockStyle.Fill };
             taskSection = new Panel { Dock = DockStyle.Top, Height = 138 };
-            var taskHeading = MakeLabel("当前任务", 16, 10, 140, 22, true);
+            var taskHeading = MakeLabel(UiText.T("当前任务"), 16, 10, 140, 22, true);
             followStatusLabel = new ThemedStatusLabel {
-                Text = "正在识别",
+                Text = UiText.T("正在识别"),
                 Tone = StatusTone.Warning,
                 Location = new Point(220, 10),
                 Size = new Size(164, 22),
@@ -630,14 +656,14 @@ namespace InstructionSwitcherCompanion
             };
             taskPicker.SelectionChangeCommitted += TaskChanged;
             followLatest = new ThemedCheckBox {
-                Text = "自动跟随 Codex 当前任务",
+                Text = UiText.T("自动跟随 Codex 当前任务"),
                 Checked = true,
                 Location = new Point(16, 101),
                 Size = new Size(368, 28),
                 ThemeMode = themeMode
             };
             followLatest.CheckedChanged += FollowChanged;
-            pathLabel = MakeLabel("等待 Codex 任务", 16, 70, 368, 26, false);
+            pathLabel = MakeLabel(UiText.T("等待 Codex 任务"), 16, 70, 368, 26, false);
             ((ThemedLabel)pathLabel).Role = ThemedLabelRole.Secondary;
             pathLabel.AutoEllipsis = true;
             taskSection.Controls.Add(taskHeading);
@@ -653,8 +679,8 @@ namespace InstructionSwitcherCompanion
             AddSectionDivider(taskSection);
 
             presetSection = new Panel { Dock = DockStyle.Top, Height = 104 };
-            presetSection.Controls.Add(MakeLabel("配置预设", 16, 10, 160, 22, true));
-            enabledCountLabel = MakeLabel("0 条已启用", 224, 10, 160, 22, false);
+            presetSection.Controls.Add(MakeLabel(UiText.T("配置预设"), 16, 10, 160, 22, true));
+            enabledCountLabel = MakeLabel(UiText.CountEnabled(0), 224, 10, 160, 22, false);
             enabledCountLabel.TextAlign = ContentAlignment.MiddleRight;
             ((ThemedLabel)enabledCountLabel).Role = ThemedLabelRole.Secondary;
             presetPicker = new ThemedComboBox {
@@ -678,9 +704,9 @@ namespace InstructionSwitcherCompanion
                 TabStop = false
             };
             presetMenu = new ContextMenuStrip();
-            savePresetItem = new ToolStripMenuItem("保存为新预设");
-            updatePresetItem = new ToolStripMenuItem("更新当前预设");
-            undoItem = new ToolStripMenuItem("撤销最近一次应用");
+            savePresetItem = new ToolStripMenuItem(UiText.T("保存为新预设"));
+            updatePresetItem = new ToolStripMenuItem(UiText.T("更新当前预设"));
+            undoItem = new ToolStripMenuItem(UiText.T("撤销最近一次应用"));
             savePresetItem.Click += SavePreset;
             updatePresetItem.Click += UpdatePreset;
             undoItem.Click += UndoPreset;
@@ -697,7 +723,7 @@ namespace InstructionSwitcherCompanion
                         ToolStripDropDownDirection.BelowLeft);
                 });
             };
-            tips.SetToolTip(presetMenuButton, "保存、更新或撤销配置预设");
+            tips.SetToolTip(presetMenuButton, UiText.T("保存、更新或撤销配置预设"));
             presetStatusLabel = MakeLabel("", 16, 72, 368, 24, false);
             ((ThemedLabel)presetStatusLabel).Role = ThemedLabelRole.Secondary;
             presetStatusLabel.AutoEllipsis = true;
@@ -715,9 +741,9 @@ namespace InstructionSwitcherCompanion
 
             instructionSection = new Panel { Dock = DockStyle.Fill };
             var instructionHeader = new Panel { Dock = DockStyle.Top, Height = 43 };
-            instructionHeader.Controls.Add(MakeLabel("启用指令", 16, 9, 170, 26, true));
+            instructionHeader.Controls.Add(MakeLabel(UiText.T("启用指令"), 16, 9, 170, 26, true));
             manageButton = new ThemedButton {
-                Text = "管理指令库",
+                Text = UiText.T("管理指令库"),
                 Glyph = GlyphKind.Settings,
                 Kind = ThemedButtonKind.Ghost,
                 Location = new Point(264, 6),
@@ -726,7 +752,7 @@ namespace InstructionSwitcherCompanion
                 TabStop = false
             };
             manageButton.Click += OpenManager;
-            tips.SetToolTip(manageButton, "编辑指令项、配置预设、默认配置和导入导出");
+            tips.SetToolTip(manageButton, UiText.T("编辑指令项、配置预设、默认配置和导入导出"));
             instructionHeader.Controls.Add(manageButton);
             instructionHeader.Resize += delegate {
                 manageButton.Left = Math.Max(16, instructionHeader.ClientSize.Width - manageButton.Width - 16);
@@ -749,7 +775,7 @@ namespace InstructionSwitcherCompanion
 
             statusPanel = new Panel { Dock = DockStyle.Bottom, Height = 48 };
             statusLabel = new ThemedStatusLabel {
-                Text = "等待任务状态",
+                Text = UiText.T("等待任务状态"),
                 Dock = DockStyle.Fill,
                 Padding = new Padding(15, 0, 0, 0),
                 AutoEllipsis = true
@@ -767,14 +793,16 @@ namespace InstructionSwitcherCompanion
                 TabStop = false
             };
             footerMenu = new ContextMenuStrip();
-            footerMenu.Items.Add("打开配置目录", null, delegate { OpenConfigFolder(); });
-            footerMenu.Items.Add("隐藏到托盘", null, delegate { HideForUser(); });
+            footerMenu.Items.Add(UiText.T("打开配置目录"), null, delegate { OpenConfigFolder(); });
+            footerMenu.Items.Add(UiText.T("隐藏到托盘"), null, delegate { HideForUser(); });
+            footerLanguageMenu = BuildLanguageMenu();
+            footerMenu.Items.Add(footerLanguageMenu);
             footerMenu.Items.Add(new ToolStripSeparator());
-            footerMenu.Items.Add("退出", null, delegate { ExitApplication(); });
+            footerMenu.Items.Add(UiText.T("退出"), null, delegate { ExitApplication(); });
             footerMenuButton.Click += delegate {
                 footerMenu.Show(footerMenuButton, new Point(footerMenuButton.Width - footerMenu.Width, 0));
             };
-            tips.SetToolTip(footerMenuButton, "更多选项");
+            tips.SetToolTip(footerMenuButton, UiText.T("更多选项"));
             statusPanel.Controls.Add(statusLabel);
             statusPanel.Controls.Add(footerMenuButton);
 
@@ -939,7 +967,7 @@ namespace InstructionSwitcherCompanion
             catch (Exception error)
             {
                 ArrangeProfileControls(committedOrder);
-                statusLabel.Text = "保存失败，已恢复：" + error.Message;
+                statusLabel.Text = UiText.Error("保存失败，已恢复：") + UiText.Error(error.Message);
             }
         }
 
@@ -1106,7 +1134,7 @@ namespace InstructionSwitcherCompanion
             if (themeButton != null)
             {
                 themeButton.Glyph = themeMode == ThemeMode.Dark ? GlyphKind.Sun : GlyphKind.Moon;
-                tips.SetToolTip(themeButton, themeMode == ThemeMode.Dark ? "切换到白天模式" : "切换到黑夜模式");
+                tips.SetToolTip(themeButton, UiText.T(themeMode == ThemeMode.Dark ? "切换到白天模式" : "切换到黑夜模式"));
             }
             if (presetMenu != null) CompanionTheme.ApplyToolStrip(presetMenu, themeMode);
             if (footerMenu != null) CompanionTheme.ApplyToolStrip(footerMenu, themeMode);
@@ -1221,11 +1249,13 @@ namespace InstructionSwitcherCompanion
         private void BuildTray()
         {
             trayMenu = new ContextMenuStrip();
-            trayMenu.Items.Add("显示面板", null, delegate { ShowPreferred(CompanionViewMode.Expanded, true); });
-            trayMenu.Items.Add("显示悬浮球", null, delegate { ShowPreferred(CompanionViewMode.Bubble, true); });
-            trayMenu.Items.Add("隐藏", null, delegate { HideForUser(); });
+            trayMenu.Items.Add(UiText.T("显示面板"), null, delegate { ShowPreferred(CompanionViewMode.Expanded, true); });
+            trayMenu.Items.Add(UiText.T("显示悬浮球"), null, delegate { ShowPreferred(CompanionViewMode.Bubble, true); });
+            trayMenu.Items.Add(UiText.T("隐藏"), null, delegate { HideForUser(); });
+            trayLanguageMenu = BuildLanguageMenu();
+            trayMenu.Items.Add(trayLanguageMenu);
             trayMenu.Items.Add(new ToolStripSeparator());
-            trayMenu.Items.Add("退出", null, delegate { ExitApplication(); });
+            trayMenu.Items.Add(UiText.T("退出"), null, delegate { ExitApplication(); });
             trayIcon = CreateTrayIcon();
             tray.Icon = trayIcon;
             tray.Text = "Instruction Switcher";
@@ -1233,6 +1263,51 @@ namespace InstructionSwitcherCompanion
             tray.Visible = true;
             tray.DoubleClick += delegate { ShowPreferred(CompanionViewMode.Expanded, true); };
             CompanionTheme.ApplyToolStrip(trayMenu, themeMode);
+        }
+
+        private ToolStripMenuItem BuildLanguageMenu()
+        {
+            var language = new ToolStripMenuItem(UiText.T("语言"));
+            var chinese = new ToolStripMenuItem(UiText.T("中文")) {
+                Checked = UiText.Current == UiLanguage.Chinese
+            };
+            var english = new ToolStripMenuItem(UiText.T("英文")) {
+                Checked = UiText.Current == UiLanguage.English
+            };
+            chinese.Click += delegate { ChangeLanguage(UiLanguage.Chinese); };
+            english.Click += delegate { ChangeLanguage(UiLanguage.English); };
+            language.DropDownItems.Add(chinese);
+            language.DropDownItems.Add(english);
+            return language;
+        }
+
+        private void ChangeLanguage(UiLanguage language)
+        {
+            if (UiText.Current == language) return;
+            FinishThemeTransition();
+            FinishTransition();
+            SavePosition();
+            UiText.Current = language;
+            windowPosition.language = UiText.Code(language);
+            SavePosition();
+
+            pollTimer.Stop();
+            transitionTimer.Stop();
+            themeTimer.Stop();
+            if (tray != null) tray.Visible = false;
+            allowExit = true;
+            BeginInvoke((MethodInvoker)delegate {
+                string executable = Application.ExecutablePath;
+                string arguments = "--restart-after " +
+                    Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture) + " " +
+                    QuoteArgument(runtimeRoot);
+                Process.Start(new ProcessStartInfo {
+                    FileName = executable,
+                    Arguments = arguments,
+                    UseShellExecute = false
+                });
+                Close();
+            });
         }
 
         private Icon CreateTrayIcon()
@@ -1283,7 +1358,7 @@ namespace InstructionSwitcherCompanion
             }
             catch (Exception error)
             {
-                statusLabel.Text = "读取失败：" + error.Message;
+                statusLabel.Text = UiText.Error("读取失败：") + UiText.Error(error.Message);
             }
 
             TrackCodex();
@@ -1351,32 +1426,32 @@ namespace InstructionSwitcherCompanion
         private bool TryReadFocus(out FocusSnapshot snapshot, out string reason)
         {
             snapshot = null;
-            reason = "前台任务探测尚未就绪";
+            reason = UiText.Error("前台任务探测尚未就绪");
             try
             {
                 if (!File.Exists(focusFile)) return false;
                 snapshot = json.Deserialize<FocusSnapshot>(File.ReadAllText(focusFile, Encoding.UTF8));
                 if (snapshot == null || snapshot.version != 1)
                 {
-                    reason = "前台任务探测数据无效";
+                    reason = UiText.Error("前台任务探测数据无效");
                     return false;
                 }
                 if (!snapshot.available)
                 {
-                    reason = "暂时无法确认 Codex 前台任务";
+                    reason = UiText.Error("暂时无法确认 Codex 前台任务");
                     return false;
                 }
                 DateTime observed;
                 if (!DateTime.TryParse(snapshot.observedAt, CultureInfo.InvariantCulture,
                     DateTimeStyles.RoundtripKind, out observed))
                 {
-                    reason = "前台任务探测时间无效";
+                    reason = UiText.Error("前台任务探测时间无效");
                     return false;
                 }
                 double age = (DateTime.UtcNow - observed.ToUniversalTime()).TotalSeconds;
                 if (age < -5 || age > 5)
                 {
-                    reason = "前台任务探测已断开";
+                    reason = UiText.Error("前台任务探测已断开");
                     return false;
                 }
                 if (String.IsNullOrWhiteSpace(snapshot.sessionId) ||
@@ -1384,14 +1459,14 @@ namespace InstructionSwitcherCompanion
                     !String.Equals(SessionKey(snapshot.sessionId), snapshot.key,
                         StringComparison.OrdinalIgnoreCase))
                 {
-                    reason = "前台任务映射校验失败";
+                    reason = UiText.Error("前台任务映射校验失败");
                     return false;
                 }
                 return true;
             }
             catch
             {
-                reason = "前台任务探测读取失败";
+                reason = UiText.Error("前台任务探测读取失败");
                 return false;
             }
         }
@@ -1432,7 +1507,7 @@ namespace InstructionSwitcherCompanion
                 libraryReady = false;
                 librarySignature = "unavailable";
                 SetProfileEditingEnabled(false);
-                statusLabel.Text = "指令库读取失败：" + error.Message;
+                statusLabel.Text = UiText.IsEnglish ? "Instruction library read failed: " + UiText.Error(error.Message) : "指令库读取失败：" + error.Message;
             }
         }
 
@@ -1598,7 +1673,7 @@ namespace InstructionSwitcherCompanion
             presetPickerRebuildPending = false;
             suppressPresetChange = true;
             presetPicker.Items.Clear();
-            presetPicker.Items.Add(new PresetItem(null, "自定义"));
+            presetPicker.Items.Add(new PresetItem(null, UiText.T("自定义")));
             int selected = 0;
             PresetDto[] presets = library.presets ?? new PresetDto[0];
             for (int i = 0; i < presets.Length; i++)
@@ -1610,7 +1685,7 @@ namespace InstructionSwitcherCompanion
             suppressPresetChange = false;
             PresetDto current = presets.FirstOrDefault(item => String.Equals(item.id, committedPresetId, StringComparison.Ordinal));
             if (presetStatusLabel != null)
-                presetStatusLabel.Text = (current == null ? "自定义配置" : current.name) + " · " + committedEnabled.Count + " 项";
+                presetStatusLabel.Text = (current == null ? UiText.T("自定义配置") : current.name) + " · " + UiText.CountItems(committedEnabled.Count);
             if (updatePresetItem != null) updatePresetItem.Enabled = CanEditActive() && presets.Length > 0;
             if (savePresetItem != null) savePresetItem.Enabled = CanEditActive();
             presetPicker.Enabled = CanEditActive() && presets.Length > 0;
@@ -1662,7 +1737,7 @@ namespace InstructionSwitcherCompanion
             if (preset == null || !CanEditActive())
             {
                 RebuildPresetPicker();
-                statusLabel.Text = "配置预设已导入，当前任务暂不可编辑";
+                statusLabel.Text = UiText.Error("配置预设已导入，当前任务暂不可编辑");
                 return;
             }
             SessionDescriptor descriptor = ActiveDescriptor();
@@ -1689,7 +1764,7 @@ namespace InstructionSwitcherCompanion
             {
                 ClearUndo();
                 RebuildPresetPicker();
-                statusLabel.Text = "应用失败：" + error.Message;
+                statusLabel.Text = UiText.Error("应用失败：") + UiText.Error(error.Message);
             }
         }
 
@@ -1703,10 +1778,10 @@ namespace InstructionSwitcherCompanion
             string[] order = committedOrder.ToArray();
             string expectedLibrarySignature = librarySignature;
             string name;
-            if (!NamePromptForm.Ask(this, "保存为配置预设", "新配置预设", themeMode, out name)) return;
+            if (!NamePromptForm.Ask(this, UiText.T("保存为配置预设"), UiText.T("新配置预设"), themeMode, out name)) return;
             if (!CanEditActive() || !MatchesTaskSnapshot(taskKey, expectedRevision, order))
             {
-                statusLabel.Text = "任务或状态已更新，请重新确认写入目标";
+                statusLabel.Text = UiText.Error("任务或状态已更新，请重新确认写入目标");
                 return;
             }
             string id = LibraryStore.NewId("preset");
@@ -1727,11 +1802,11 @@ namespace InstructionSwitcherCompanion
             }
             catch (Exception error)
             {
-                statusLabel.Text = "保存预设失败：" + error.Message;
+                statusLabel.Text = UiText.Error("保存预设失败：") + UiText.Error(error.Message);
                 return;
             }
             TryCommitPresetAndState(next, taskKey, expectedRevision, order, id,
-                "已保存配置预设“" + name + "”", expectedLibrarySignature);
+                (UiText.IsEnglish ? "Saved preset " + UiText.Quote(name) : "已保存配置预设“" + name + "”"), expectedLibrarySignature);
         }
 
         private void UpdatePreset(object sender, EventArgs e)
@@ -1746,11 +1821,14 @@ namespace InstructionSwitcherCompanion
             PresetDto target = (library.presets ?? new PresetDto[0]).FirstOrDefault(item =>
                 String.Equals(item.id, committedPresetId, StringComparison.Ordinal));
             if (target == null && !PresetSelectionForm.SelectPreset(this, library.presets, themeMode, out target)) return;
-            if (MessageBox.Show(this, "将当前任务的 " + committedOrder.Count + " 条指令写入“" + target.name + "”？",
-                "更新配置预设", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
+            string updateMessage = UiText.IsEnglish
+                ? "Save the current task's " + committedOrder.Count + " enabled instructions to " + UiText.Quote(target.name) + "?"
+                : "将当前任务的 " + committedOrder.Count + " 条指令写入“" + target.name + "”？";
+            if (MessageBox.Show(this, updateMessage,
+                UiText.T("更新配置预设"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
             if (!CanEditActive() || !MatchesTaskSnapshot(taskKey, expectedRevision, order))
             {
-                statusLabel.Text = "任务或状态已更新，请重新确认写入目标";
+                statusLabel.Text = UiText.Error("任务或状态已更新，请重新确认写入目标");
                 return;
             }
             SettingsDto next;
@@ -1763,11 +1841,11 @@ namespace InstructionSwitcherCompanion
             }
             catch (Exception error)
             {
-                statusLabel.Text = "更新预设失败：" + error.Message;
+                statusLabel.Text = UiText.Error("更新预设失败：") + UiText.Error(error.Message);
                 return;
             }
             TryCommitPresetAndState(next, taskKey, expectedRevision, order, target.id,
-                "已更新配置预设“" + target.name + "”", expectedLibrarySignature);
+                (UiText.IsEnglish ? "Updated preset " + UiText.Quote(target.name) : "已更新配置预设“" + target.name + "”"), expectedLibrarySignature);
         }
 
         private bool MatchesTaskSnapshot(string taskKey, string revision, string[] order)
@@ -1788,7 +1866,7 @@ namespace InstructionSwitcherCompanion
             }
             catch (Exception error)
             {
-                statusLabel.Text = "预设保存失败：" + error.Message;
+                statusLabel.Text = UiText.Error("预设保存失败：") + UiText.Error(error.Message);
                 return false;
             }
 
@@ -1808,7 +1886,8 @@ namespace InstructionSwitcherCompanion
                 RefreshLibrary();
                 if (!libraryReady)
                 {
-                    statusLabel.Text = successText + "；任务状态已更新，指令库重新读取失败";
+                    statusLabel.Text = successText + (UiText.IsEnglish ? "; " : "；") +
+                        UiText.Error("任务状态已更新，指令库重新读取失败");
                     return true;
                 }
                 SessionDescriptor active = ActiveDescriptor();
@@ -1818,14 +1897,16 @@ namespace InstructionSwitcherCompanion
                     RefreshState();
                     if (!stateLoaded || !String.IsNullOrWhiteSpace(lastStateError))
                     {
-                        statusLabel.Text = successText + "；任务状态已更新，重新读取失败";
+                        statusLabel.Text = successText + (UiText.IsEnglish ? "; " : "；") +
+                            UiText.Error("任务状态已更新，重新读取失败");
                         return true;
                     }
                 }
             }
             catch (Exception error)
             {
-                statusLabel.Text = successText + "；配置和任务状态已保存，界面刷新失败：" + error.Message;
+                statusLabel.Text = successText + (UiText.IsEnglish ? "; " : "；") +
+                    UiText.Error("配置和任务状态已保存，界面刷新失败：") + UiText.Error(error.Message);
                 return true;
             }
             statusLabel.Text = successText;
@@ -1850,15 +1931,15 @@ namespace InstructionSwitcherCompanion
             RefreshState();
             if (restored)
             {
-                statusLabel.Text = "任务状态发生变化，预设配置已恢复：" + stateError.Message;
+                statusLabel.Text = UiText.Error("任务状态发生变化，预设配置已恢复：") + UiText.Error(stateError.Message);
             }
             else if (!String.IsNullOrWhiteSpace(rollbackError))
             {
-                statusLabel.Text = "预设已保存，任务状态未更新，配置回滚失败：" + rollbackError;
+                statusLabel.Text = UiText.Error("预设已保存，任务状态未更新，配置回滚失败：") + UiText.Error(rollbackError);
             }
             else
             {
-                statusLabel.Text = "预设已保存，任务状态未更新；配置已被其他窗口修改，保留当前配置：" + stateError.Message;
+                statusLabel.Text = UiText.Error("预设已保存，任务状态未更新；配置已被其他窗口修改，保留当前配置：") + UiText.Error(stateError.Message);
             }
         }
 
@@ -1878,11 +1959,11 @@ namespace InstructionSwitcherCompanion
                 SessionState state = WriteState(StatePathForKey(activeDescriptor.key), undoState.enabled, currentRevision, active);
                 ApplyStateSnapshot(activeDescriptor, state, true);
                 stateSignature = StateSignature(activeDescriptor);
-                statusLabel.Text = "已撤销最近一次预设应用";
+                statusLabel.Text = UiText.Error("已撤销最近一次预设应用");
             }
             catch (Exception error)
             {
-                statusLabel.Text = "撤销失败：" + error.Message;
+                statusLabel.Text = UiText.Error("撤销失败：") + UiText.Error(error.Message);
             }
             finally
             {
@@ -1957,7 +2038,7 @@ namespace InstructionSwitcherCompanion
             if (descriptor == null)
             {
                 ClearUndo();
-                pathLabel.Text = "等待 Codex 任务";
+                pathLabel.Text = UiText.T("等待 Codex 任务");
                 tips.SetToolTip(pathLabel, "");
                 selectionConfirmed = false;
                 profileSignature = "";
@@ -1971,12 +2052,12 @@ namespace InstructionSwitcherCompanion
                 stateLoaded = false;
                 BuildProfiles(null);
                 RebuildPresetPicker();
-                statusLabel.Text = "等待任务状态";
+                statusLabel.Text = UiText.T("等待任务状态");
                 return;
             }
 
             string location = String.IsNullOrWhiteSpace(descriptor.cwd)
-                ? "当前任务：" + (String.IsNullOrWhiteSpace(descriptor.project) ? "Codex task" : descriptor.project)
+                ? UiText.T("当前任务") + ": " + (String.IsNullOrWhiteSpace(descriptor.project) ? "Codex task" : descriptor.project)
                 : descriptor.cwd;
             pathLabel.Text = location;
             tips.SetToolTip(pathLabel, location);
@@ -2013,7 +2094,7 @@ namespace InstructionSwitcherCompanion
 
             if (descriptor == null)
             {
-                profileList.Controls.Add(MakePlaceholder("打开或恢复一个 Codex 任务"));
+                profileList.Controls.Add(MakePlaceholder(UiText.T("打开或恢复一个 Codex 任务")));
                 suppressProfileChange = false;
                 return;
             }
@@ -2021,7 +2102,7 @@ namespace InstructionSwitcherCompanion
             if (!libraryReady)
             {
                 stateLoaded = false;
-                profileList.Controls.Add(MakePlaceholder("指令库暂不可用"));
+                profileList.Controls.Add(MakePlaceholder(UiText.T("指令库暂不可用")));
                 suppressProfileChange = false;
                 SetProfileEditingEnabled(false);
                 return;
@@ -2047,7 +2128,7 @@ namespace InstructionSwitcherCompanion
 
             if (profiles.Length == 0)
             {
-                profileList.Controls.Add(MakePlaceholder("自定义列表中没有可显示的指令"));
+                profileList.Controls.Add(MakePlaceholder(UiText.T("自定义列表中没有可显示的指令")));
                 suppressProfileChange = false;
             }
             else
@@ -2056,7 +2137,7 @@ namespace InstructionSwitcherCompanion
                 {
                     string summary = InstructionSummary(profile);
                     if (String.Equals(profile.origin, "preset-package", StringComparison.Ordinal))
-                        summary = "随预设导入" + (summary.Length == 0 ? "" : " · " + summary);
+                        summary = UiText.T("随预设导入") + (summary.Length == 0 ? "" : " · " + summary);
                     var check = new InstructionToggle {
                         TitleText = profile.name,
                         SummaryText = summary,
@@ -2077,7 +2158,8 @@ namespace InstructionSwitcherCompanion
                     check.DragDrop += ProfileDragDrop;
                     profileChecks[profile.id] = check;
                     profileList.Controls.Add(check);
-                    tips.SetToolTip(check, profile.name + " (" + profile.id + ")\n启用后可拖动左侧手柄调整顺序");
+                    tips.SetToolTip(check, profile.name + " (" + profile.id + ")\n" +
+                        (UiText.IsEnglish ? "Drag the left handle to reorder when enabled" : "启用后可拖动左侧手柄调整顺序"));
                 }
                 suppressProfileChange = false;
             }
@@ -2101,7 +2183,7 @@ namespace InstructionSwitcherCompanion
             }
             catch
             {
-                return "正文暂不可用";
+                return UiText.T("正文暂不可用");
             }
         }
 
@@ -2151,7 +2233,7 @@ namespace InstructionSwitcherCompanion
             error = null;
             if (!libraryReady)
             {
-                error = "指令库暂不可用";
+                error = UiText.T("指令库暂不可用");
                 return false;
             }
             try
@@ -2272,14 +2354,14 @@ namespace InstructionSwitcherCompanion
             catch (Exception error)
             {
                 RestoreCommittedSelection();
-                statusLabel.Text = "保存失败，已恢复：" + error.Message;
+                statusLabel.Text = UiText.IsEnglish ? "Save failed; restored: " + UiText.Error(error.Message) : "保存失败，已恢复：" + error.Message;
             }
         }
 
         private void CommitEnabledOrder(SessionDescriptor descriptor, IEnumerable<string> preferredOrder)
         {
             if (descriptor == null || !CanEditActive())
-                throw new InvalidOperationException("当前任务处于只读状态");
+                throw new InvalidOperationException(UiText.Error("当前任务处于只读状态"));
             List<string> enabled = BuildEnabledOrder(preferredOrder);
             string activePreset = MatchingPreset(enabled.ToArray(), null);
             SessionState state = WriteState(StatePathForKey(descriptor.key), enabled.ToArray(),
@@ -2494,68 +2576,69 @@ namespace InstructionSwitcherCompanion
             UpdateHeaderSummaries();
             if (!String.IsNullOrWhiteSpace(lastStateError))
             {
-                statusLabel.Text = "状态读取失败：" + lastStateError;
+                statusLabel.Text = UiText.IsEnglish ? "State read failed: " + UiText.Error(lastStateError) : "状态读取失败：" + lastStateError;
                 return;
             }
             if (followLatest.Checked && !focusConfirmed)
             {
-                statusLabel.Text = "正在识别前台任务 · 只读预览 · " + count + " 项";
+                statusLabel.Text = UiText.IsEnglish ? "Detecting active task · Read-only preview · " + UiText.CountItems(count) : "正在识别前台任务 · 只读预览 · " + count + " 项";
                 return;
             }
             if (followLatest.Checked && focusConfirmed)
             {
                 if (!String.IsNullOrWhiteSpace(lastAcknowledgementError))
                 {
-                    statusLabel.Text = "已跟随当前任务 · Hook 回执异常";
+                    statusLabel.Text = UiText.IsEnglish ? "Following current task · Hook acknowledgement error" : "已跟随当前任务 · Hook 回执异常";
                     return;
                 }
                 if (!String.IsNullOrWhiteSpace(currentRevision) &&
                     String.Equals(currentRevision, acknowledgedRevision, StringComparison.Ordinal))
                 {
-                    statusLabel.Text = "已跟随 · Hook 已读取 · " + count + " 项";
+                    statusLabel.Text = UiText.IsEnglish ? "Following · Hook read the state · " + UiText.CountItems(count) : "已跟随 · Hook 已读取 · " + count + " 项";
                     return;
                 }
                 if (!String.IsNullOrWhiteSpace(currentRevision))
                 {
-                    statusLabel.Text = "已跟随 · 已保存 · " + count + " 项";
+                    statusLabel.Text = UiText.IsEnglish ? "Following · Saved · " + UiText.CountItems(count) : "已跟随 · 已保存 · " + count + " 项";
                     return;
                 }
-                statusLabel.Text = "已跟随当前任务 · " + count + " 项";
+                statusLabel.Text = UiText.IsEnglish ? "Following current task · " + UiText.CountItems(count) : "已跟随当前任务 · " + count + " 项";
                 return;
             }
             if (!selectionConfirmed)
             {
-                statusLabel.Text = "请选择写入目标";
+                statusLabel.Text = UiText.Error("请选择写入目标");
                 return;
             }
             if (!stateLoaded)
             {
-                statusLabel.Text = "等待任务状态";
+                statusLabel.Text = UiText.T("等待任务状态");
                 return;
             }
             if (!String.IsNullOrWhiteSpace(lastAcknowledgementError))
             {
-                statusLabel.Text = "Hook 回执读取失败";
+                statusLabel.Text = UiText.Error("Hook 回执读取失败");
                 return;
             }
             if (!String.IsNullOrWhiteSpace(currentRevision) &&
                 String.Equals(currentRevision, acknowledgedRevision, StringComparison.Ordinal))
             {
-                statusLabel.Text = "Hook 已读取 · " + count + " 项";
+                statusLabel.Text = UiText.IsEnglish ? "Hook read the state · " + UiText.CountItems(count) : "Hook 已读取 · " + count + " 项";
                 return;
             }
             if (!String.IsNullOrWhiteSpace(currentRevision))
             {
-                statusLabel.Text = "已保存，等待下一条消息 · " + count + " 项";
+                statusLabel.Text = UiText.IsEnglish ? "Saved; waiting for the next message · " + UiText.CountItems(count) : "已保存，等待下一条消息 · " + count + " 项";
                 return;
             }
-            statusLabel.Text = count == 0 ? "尚未启用指令" : "已确认 · " + count + " 项";
+            statusLabel.Text = count == 0 ? UiText.Error("尚未启用指令") :
+                (UiText.IsEnglish ? "Confirmed · " + UiText.CountItems(count) : "已确认 · " + count + " 项");
         }
 
         private void UpdateHeaderSummaries()
         {
             if (enabledCountLabel != null)
-                enabledCountLabel.Text = committedEnabled.Count + " 条已启用";
+                enabledCountLabel.Text = UiText.CountEnabled(committedEnabled.Count);
             UpdateFollowStatus();
         }
 
@@ -2564,22 +2647,22 @@ namespace InstructionSwitcherCompanion
             if (followStatusLabel == null || followLatest == null) return;
             if (followLatest.Checked && focusConfirmed)
             {
-                followStatusLabel.Text = "已准确跟随";
+                followStatusLabel.Text = UiText.T("已准确跟随");
                 followStatusLabel.Tone = StatusTone.Accent;
             }
             else if (followLatest.Checked)
             {
-                followStatusLabel.Text = "正在识别";
+                followStatusLabel.Text = UiText.T("正在识别");
                 followStatusLabel.Tone = StatusTone.Warning;
             }
             else if (selectionConfirmed)
             {
-                followStatusLabel.Text = "手动目标";
+                followStatusLabel.Text = UiText.T("手动目标");
                 followStatusLabel.Tone = StatusTone.Neutral;
             }
             else
             {
-                followStatusLabel.Text = "请选择任务";
+                followStatusLabel.Text = UiText.T("请选择任务");
                 followStatusLabel.Tone = StatusTone.Warning;
             }
         }
@@ -2590,15 +2673,24 @@ namespace InstructionSwitcherCompanion
             string value = statusLabel == null ? "" : statusLabel.Text ?? "";
             if (value.IndexOf("失败", StringComparison.Ordinal) >= 0 ||
                 value.IndexOf("异常", StringComparison.Ordinal) >= 0 ||
-                value.IndexOf("错误", StringComparison.Ordinal) >= 0)
+                value.IndexOf("错误", StringComparison.Ordinal) >= 0 ||
+                value.IndexOf("failed", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("invalid", StringComparison.OrdinalIgnoreCase) >= 0)
                 bubbleSurface.StatusTone = StatusTone.Danger;
             else if (value.IndexOf("等待", StringComparison.Ordinal) >= 0 ||
                 value.IndexOf("识别", StringComparison.Ordinal) >= 0 ||
-                value.IndexOf("只读", StringComparison.Ordinal) >= 0)
+                value.IndexOf("只读", StringComparison.Ordinal) >= 0 ||
+                value.IndexOf("waiting", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("detecting", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("read-only", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("unsaved", StringComparison.OrdinalIgnoreCase) >= 0)
                 bubbleSurface.StatusTone = StatusTone.Warning;
             else
                 bubbleSurface.StatusTone = StatusTone.Accent;
-            string tooltip = "展开指令面板 · " + committedEnabled.Count + " 条指令已启用";
+            string tooltip = UiText.IsEnglish
+                ? "Open instruction panel · " + UiText.CountEnabled(committedEnabled.Count)
+                : "展开指令面板 · " + committedEnabled.Count + " 条指令已启用";
             tips.SetToolTip(bubbleSurface, tooltip);
             bubbleSurface.AccessibleDescription = tooltip;
             bubbleSurface.Invalidate();
@@ -2693,7 +2785,7 @@ namespace InstructionSwitcherCompanion
             }
             catch
             {
-                focusReason = "前台任务探测器启动失败";
+                focusReason = UiText.Error("前台任务探测器启动失败");
                 if (focusTracker != null) focusTracker.Dispose();
                 focusTracker = null;
                 focusTrackerPort = 0;
@@ -3277,6 +3369,7 @@ namespace InstructionSwitcherCompanion
                 windowPosition.version = 2;
                 windowPosition.theme = themeMode == ThemeMode.Dark ? "dark" : "light";
                 windowPosition.view = preferredView == CompanionViewMode.Bubble ? "bubble" : "expanded";
+                windowPosition.language = UiText.Code(UiText.Current);
                 WindowPlacement legacy = windowPosition.expanded ?? windowPosition.bubble;
                 if (legacy != null)
                 {

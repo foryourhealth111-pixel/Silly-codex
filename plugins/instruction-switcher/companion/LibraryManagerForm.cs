@@ -23,11 +23,11 @@ namespace InstructionSwitcherCompanion
             MinimizeBox = false;
             ShowInTaskbar = false;
             Font = CompanionTheme.UiFont(9F);
-            Controls.Add(new Label { Text = "名称", Location = new Point(16, 16), Size = new Size(348, 20) });
+            Controls.Add(new Label { Text = UiText.T("名称"), Location = new Point(16, 16), Size = new Size(348, 20) });
             input = new TextBox { Text = initial ?? "", Location = new Point(16, 39), Size = new Size(348, 26), BorderStyle = BorderStyle.FixedSingle };
             Controls.Add(input);
-            var cancel = new ThemedButton { Text = "取消", Kind = ThemedButtonKind.Secondary, DialogResult = DialogResult.Cancel, Location = new Point(278, 81), Size = new Size(86, 28) };
-            var save = new ThemedButton { Text = "确定", Kind = ThemedButtonKind.Primary, DialogResult = DialogResult.OK, Location = new Point(186, 81), Size = new Size(86, 28) };
+            var cancel = new ThemedButton { Text = UiText.T("取消"), Kind = ThemedButtonKind.Secondary, DialogResult = DialogResult.Cancel, Location = new Point(278, 81), Size = new Size(86, 28) };
+            var save = new ThemedButton { Text = UiText.T("确定"), Kind = ThemedButtonKind.Primary, DialogResult = DialogResult.OK, Location = new Point(186, 81), Size = new Size(86, 28) };
             Controls.Add(save); Controls.Add(cancel); AcceptButton = save; CancelButton = cancel;
             CompanionTheme.Apply(this, themeMode);
             CompanionTheme.ApplyWindow(this, themeMode);
@@ -50,7 +50,7 @@ namespace InstructionSwitcherCompanion
                 value = dialog.input.Text.Trim();
                 if (value.Length == 0 || value.Length > 200)
                 {
-                    MessageBox.Show(owner, "名称长度需要在 1 到 200 个字符之间。", title,
+                    MessageBox.Show(owner, UiText.IsEnglish ? "Name must contain 1 to 200 characters." : "名称长度需要在 1 到 200 个字符之间。", title,
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return false;
                 }
@@ -65,19 +65,19 @@ namespace InstructionSwitcherCompanion
 
         private PresetSelectionForm(PresetDto[] presets, ThemeMode themeMode)
         {
-            Text = "选择配置预设";
+            Text = UiText.T("选择配置预设");
             ClientSize = new Size(400, 124);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             StartPosition = FormStartPosition.CenterParent;
             MaximizeBox = false; MinimizeBox = false; ShowInTaskbar = false;
             Font = CompanionTheme.UiFont(9F);
-            Controls.Add(new Label { Text = "更新目标", Location = new Point(16, 16), Size = new Size(368, 20) });
+            Controls.Add(new Label { Text = UiText.T("更新目标"), Location = new Point(16, 16), Size = new Size(368, 20) });
             picker = new ThemedComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(16, 39), Size = new Size(368, 28), ThemeMode = themeMode };
             foreach (PresetDto preset in presets ?? new PresetDto[0]) picker.Items.Add(new PresetItem(preset));
             if (picker.Items.Count > 0) picker.SelectedIndex = 0;
             Controls.Add(picker);
-            var cancel = new ThemedButton { Text = "取消", Kind = ThemedButtonKind.Secondary, DialogResult = DialogResult.Cancel, Location = new Point(298, 81), Size = new Size(86, 28) };
-            var save = new ThemedButton { Text = "确定", Kind = ThemedButtonKind.Primary, DialogResult = DialogResult.OK, Location = new Point(206, 81), Size = new Size(86, 28) };
+            var cancel = new ThemedButton { Text = UiText.T("取消"), Kind = ThemedButtonKind.Secondary, DialogResult = DialogResult.Cancel, Location = new Point(298, 81), Size = new Size(86, 28) };
+            var save = new ThemedButton { Text = UiText.T("确定"), Kind = ThemedButtonKind.Primary, DialogResult = DialogResult.OK, Location = new Point(206, 81), Size = new Size(86, 28) };
             Controls.Add(save); Controls.Add(cancel); AcceptButton = save; CancelButton = cancel;
             CompanionTheme.Apply(this, themeMode);
             CompanionTheme.ApplyWindow(this, themeMode);
@@ -112,8 +112,8 @@ namespace InstructionSwitcherCompanion
         {
             if (Instruction == null) return "";
             string suffix = String.Equals(Instruction.origin, "preset-package", StringComparison.Ordinal)
-                ? " · 随预设" : "";
-            if (Instruction.showInCustomPicker == false) suffix += " · 已隐藏";
+                ? " · " + UiText.T("随预设") : "";
+            if (Instruction.showInCustomPicker == false) suffix += " · " + UiText.T("已隐藏");
             return Instruction.name + suffix;
         }
     }
@@ -185,7 +185,7 @@ namespace InstructionSwitcherCompanion
             this.root = root;
             this.stateRoot = stateRoot;
             this.themeMode = themeMode;
-            Text = "管理指令库与配置预设";
+            Text = UiText.T("管理指令库与配置预设");
             ClientSize = new Size(960, 640);
             MinimumSize = new Size(860, 580);
             StartPosition = FormStartPosition.CenterParent;
@@ -202,8 +202,8 @@ namespace InstructionSwitcherCompanion
         private void BuildWindow()
         {
             var tabs = new ThemedTabControl { Dock = DockStyle.Fill, ThemeMode = themeMode, FillTabs = true };
-            var instructions = new TabPage("指令库");
-            var presets = new TabPage("配置预设");
+            var instructions = new TabPage(UiText.T("指令库"));
+            var presets = new TabPage(UiText.T("配置预设"));
             tabs.TabPages.Add(instructions); tabs.TabPages.Add(presets);
             BuildInstructionPage(instructions);
             BuildPresetPage(presets);
@@ -216,8 +216,8 @@ namespace InstructionSwitcherCompanion
                 Padding = new Padding(10, 8, 10, 6)
             };
             var moreMenu = new ContextMenuStrip();
-            moreMenu.Items.Add("备份整个指令库…", null, ExportBackup);
-            moreMenu.Items.Add("恢复备份…", null, RestoreBackup);
+            moreMenu.Items.Add(UiText.T("备份整个指令库…"), null, ExportBackup);
+            moreMenu.Items.Add(UiText.T("恢复备份…"), null, RestoreBackup);
             var more = new ThemedButton {
                 Text = "",
                 Glyph = GlyphKind.More,
@@ -226,10 +226,10 @@ namespace InstructionSwitcherCompanion
                 Size = new Size(38, 32),
                 Margin = new Padding(4, 0, 0, 0)
             };
-            tips.SetToolTip(more, "更多库操作");
+            tips.SetToolTip(more, UiText.T("更多库操作"));
             more.Click += delegate { moreMenu.Show(more, new Point(0, more.Height)); };
             var import = new ThemedButton {
-                Text = "导入包…",
+                Text = UiText.T("导入包…"),
                 ThemeMode = themeMode,
                 Kind = ThemedButtonKind.Primary,
                 Size = new Size(104, 32),
@@ -288,9 +288,9 @@ namespace InstructionSwitcherCompanion
 
         private Button ToolbarButton(string text, string tooltip)
         {
-            ThemedButtonKind kind = text.StartsWith("新增", StringComparison.Ordinal)
+            ThemedButtonKind kind = text.StartsWith(UiText.T("新增"), StringComparison.Ordinal)
                 ? ThemedButtonKind.Primary
-                : text.StartsWith("删除", StringComparison.Ordinal)
+                : text.StartsWith(UiText.T("删除指令"), StringComparison.Ordinal) || text.StartsWith(UiText.T("删除预设"), StringComparison.Ordinal)
                     ? ThemedButtonKind.Danger
                     : ThemedButtonKind.Secondary;
             var button = new ThemedButton
@@ -307,8 +307,8 @@ namespace InstructionSwitcherCompanion
 
         private Button CommandButton(string text, int width)
         {
-            ThemedButtonKind kind = text == "保存" ? ThemedButtonKind.Primary :
-                text.IndexOf("删除", StringComparison.Ordinal) >= 0
+            ThemedButtonKind kind = text == UiText.T("保存") ? ThemedButtonKind.Primary :
+                text.IndexOf(UiText.T("删除指令"), StringComparison.Ordinal) >= 0
                     ? ThemedButtonKind.Danger : ThemedButtonKind.Ghost;
             var button = new ThemedButton {
                 Text = text,
@@ -336,7 +336,7 @@ namespace InstructionSwitcherCompanion
             var split = LibrarySplitContainer();
             split.Panel1.Padding = new Padding(12); split.Panel2.Padding = new Padding(14, 12, 12, 12);
             instructionSearch = new ThemedTextBox { Dock = DockStyle.Top, Height = 32, ThemeMode = themeMode };
-            CompanionTheme.SetCueBanner(instructionSearch, "搜索指令");
+            CompanionTheme.SetCueBanner(instructionSearch, UiText.T("搜索指令"));
             instructionSearch.TextChanged += delegate { RefreshInstructionList(true); };
             instructionScope = new ThemedComboBox {
                 Dock = DockStyle.Top,
@@ -344,7 +344,7 @@ namespace InstructionSwitcherCompanion
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 ThemeMode = themeMode
             };
-            instructionScope.Items.AddRange(new object[] { "常用指令", "随预设导入", "已隐藏", "全部指令" });
+            instructionScope.Items.AddRange(new object[] { UiText.T("常用指令"), UiText.T("随预设导入"), UiText.T("已隐藏"), UiText.T("全部指令") });
             instructionScope.SelectedIndex = 0;
             instructionScope.SelectedIndexChanged += delegate { RefreshInstructionList(true); };
             instructionList = new ThemedListBox { Dock = DockStyle.Fill, IntegralHeight = false, ThemeMode = themeMode };
@@ -361,8 +361,8 @@ namespace InstructionSwitcherCompanion
                 if (index >= 0) instructionList.SelectedIndex = index;
             };
             var instructionMenu = new ContextMenuStrip();
-            ToolStripItem exportInstruction = instructionMenu.Items.Add("导出当前指令…", null, ExportSelectedInstruction);
-            ToolStripItem deleteInstruction = instructionMenu.Items.Add("删除指令项", null, DeleteInstruction);
+            ToolStripItem exportInstruction = instructionMenu.Items.Add(UiText.T("导出当前指令…"), null, ExportSelectedInstruction);
+            ToolStripItem deleteInstruction = instructionMenu.Items.Add(UiText.T("删除指令项"), null, DeleteInstruction);
             instructionMenu.Opening += delegate {
                 bool selected = instructionList.SelectedItem != null;
                 exportInstruction.Enabled = selected;
@@ -383,10 +383,10 @@ namespace InstructionSwitcherCompanion
             toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             toolbar.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
             toolbar.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            Button add = ToolbarButton("新增指令", "新增指令项"); add.Click += delegate { BeginInstruction(null); };
-            Button copy = ToolbarButton("复制指令", "复制指令项"); copy.Click += CopyInstruction;
-            Button remove = ToolbarButton("删除指令", "删除指令项"); remove.Click += DeleteInstruction;
-            Button export = ToolbarButton("导出指令", "导出当前指令项"); export.Click += ExportSelectedInstruction;
+            Button add = ToolbarButton(UiText.T("新增指令"), UiText.T("新增指令项")); add.Click += delegate { BeginInstruction(null); };
+            Button copy = ToolbarButton(UiText.T("复制指令"), UiText.T("复制指令项")); copy.Click += CopyInstruction;
+            Button remove = ToolbarButton(UiText.T("删除指令"), UiText.T("删除指令项")); remove.Click += DeleteInstruction;
+            Button export = ToolbarButton(UiText.T("导出指令"), UiText.T("导出当前指令项")); export.Click += ExportSelectedInstruction;
             toolbar.Controls.Add(add, 0, 0);
             toolbar.Controls.Add(copy, 1, 0);
             toolbar.Controls.Add(export, 0, 1);
@@ -395,13 +395,13 @@ namespace InstructionSwitcherCompanion
             split.Panel1.Controls.Add(instructionScope); split.Panel1.Controls.Add(instructionSearch);
 
             var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 42, FlowDirection = FlowDirection.RightToLeft, WrapContents = false };
-            Button save = CommandButton("保存", 82); save.Click += delegate { SaveInstruction(); };
-            Button cancel = CommandButton("取消", 82); cancel.Click += delegate { CancelInstructionEdit(); };
-            Button removeInstruction = CommandButton("删除指令", 82); removeInstruction.Click += DeleteInstruction;
+            Button save = CommandButton(UiText.T("保存"), 82); save.Click += delegate { SaveInstruction(); };
+            Button cancel = CommandButton(UiText.T("取消"), 82); cancel.Click += delegate { CancelInstructionEdit(); };
+            Button removeInstruction = CommandButton(UiText.T("删除指令"), 92); removeInstruction.Click += DeleteInstruction;
             footer.Controls.Add(save); footer.Controls.Add(cancel); footer.Controls.Add(removeInstruction);
-            instructionStatus = new ThemedStatusLabel { Dock = DockStyle.Bottom, Height = 28, Text = "就绪", TextAlign = ContentAlignment.MiddleLeft, AutoEllipsis = true, ThemeMode = themeMode };
+            instructionStatus = new ThemedStatusLabel { Dock = DockStyle.Bottom, Height = 28, Text = UiText.T("就绪"), TextAlign = ContentAlignment.MiddleLeft, AutoEllipsis = true, ThemeMode = themeMode };
             editorTabs = new ThemedTabControl { Dock = DockStyle.Fill, ThemeMode = themeMode, ItemSize = new Size(86, 32) };
-            var edit = new TabPage("编辑"); var preview = new TabPage("预览");
+            var edit = new TabPage(UiText.T("编辑")); var preview = new TabPage(UiText.T("预览"));
             instructionBody = new RichTextBox { Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, AcceptsTab = true, Font = new Font("Consolas", 10F) };
             instructionBody.TextChanged += InstructionEdited;
             instructionPreview = new RichTextBox { Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, ReadOnly = true, BackColor = Color.White, Font = CompanionTheme.UiFont(10F) };
@@ -409,7 +409,7 @@ namespace InstructionSwitcherCompanion
             editorTabs.SelectedIndexChanged += delegate { if (editorTabs.SelectedIndex == 1) RefreshPreview(); };
             instructionMeta = new ThemedLabel { Dock = DockStyle.Top, Height = 24, Role = ThemedLabelRole.Secondary, ThemeMode = themeMode, TextAlign = ContentAlignment.MiddleLeft, AutoEllipsis = true };
             instructionVisible = new ThemedCheckBox {
-                Text = "显示在自定义列表",
+                Text = UiText.T("显示在自定义列表"),
                 Dock = DockStyle.Top,
                 Height = 32,
                 ThemeMode = themeMode
@@ -417,7 +417,7 @@ namespace InstructionSwitcherCompanion
             instructionVisible.CheckedChanged += InstructionEdited;
             instructionName = new ThemedTextBox { Dock = DockStyle.Top, Height = 34, ThemeMode = themeMode };
             instructionName.TextChanged += InstructionEdited;
-            var nameLabel = new Label { Text = "名称", Dock = DockStyle.Top, Height = 24, TextAlign = ContentAlignment.BottomLeft };
+            var nameLabel = new Label { Text = UiText.T("名称"), Dock = DockStyle.Top, Height = 24, TextAlign = ContentAlignment.BottomLeft };
             split.Panel2.Controls.Add(editorTabs); split.Panel2.Controls.Add(instructionMeta); split.Panel2.Controls.Add(instructionVisible); split.Panel2.Controls.Add(instructionName);
             split.Panel2.Controls.Add(nameLabel); split.Panel2.Controls.Add(instructionStatus); split.Panel2.Controls.Add(footer);
             page.Controls.Add(split);
@@ -428,7 +428,7 @@ namespace InstructionSwitcherCompanion
             var split = LibrarySplitContainer();
             split.Panel1.Padding = new Padding(12); split.Panel2.Padding = new Padding(14, 12, 12, 12);
             presetSearch = new ThemedTextBox { Dock = DockStyle.Top, Height = 32, ThemeMode = themeMode };
-            CompanionTheme.SetCueBanner(presetSearch, "搜索预设");
+            CompanionTheme.SetCueBanner(presetSearch, UiText.T("搜索预设"));
             presetSearch.TextChanged += delegate { RefreshPresetList(true); };
             presetList = new ThemedListBox { Dock = DockStyle.Fill, IntegralHeight = false, ThemeMode = themeMode };
             presetList.SelectedIndexChanged += PresetSelectionChanged;
@@ -452,9 +452,9 @@ namespace InstructionSwitcherCompanion
             toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             toolbar.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
             toolbar.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            Button add = ToolbarButton("新增预设", "新增配置预设"); add.Click += delegate { BeginPreset(null); };
-            Button remove = ToolbarButton("删除预设", "删除配置预设"); remove.Click += DeletePreset;
-            Button export = ToolbarButton("导出预设", "导出当前配置预设及依赖指令"); export.Click += ExportSelectedPreset;
+            Button add = ToolbarButton(UiText.T("新增预设"), UiText.T("新增配置预设")); add.Click += delegate { BeginPreset(null); };
+            Button remove = ToolbarButton(UiText.T("删除预设"), UiText.T("删除配置预设")); remove.Click += DeletePreset;
+            Button export = ToolbarButton(UiText.T("导出预设"), UiText.T("导出当前配置预设及依赖指令")); export.Click += ExportSelectedPreset;
             toolbar.Controls.Add(add, 0, 0);
             toolbar.Controls.Add(remove, 1, 0);
             toolbar.Controls.Add(export, 0, 1);
@@ -462,10 +462,10 @@ namespace InstructionSwitcherCompanion
             split.Panel1.Controls.Add(presetList); split.Panel1.Controls.Add(toolbar); split.Panel1.Controls.Add(presetSearch);
 
             var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 42, FlowDirection = FlowDirection.RightToLeft, WrapContents = false };
-            Button save = CommandButton("保存", 82); save.Click += delegate { SavePreset(); };
-            Button cancel = CommandButton("取消", 82); cancel.Click += delegate { CancelPresetEdit(); };
+            Button save = CommandButton(UiText.T("保存"), 82); save.Click += delegate { SavePreset(); };
+            Button cancel = CommandButton(UiText.T("取消"), 82); cancel.Click += delegate { CancelPresetEdit(); };
             footer.Controls.Add(save); footer.Controls.Add(cancel);
-            presetStatus = new ThemedStatusLabel { Dock = DockStyle.Bottom, Height = 28, Text = "就绪", TextAlign = ContentAlignment.MiddleLeft, AutoEllipsis = true, ThemeMode = themeMode };
+            presetStatus = new ThemedStatusLabel { Dock = DockStyle.Bottom, Height = 28, Text = UiText.T("就绪"), TextAlign = ContentAlignment.MiddleLeft, AutoEllipsis = true, ThemeMode = themeMode };
 
             var selection = new TableLayoutPanel {
                 Dock = DockStyle.Fill,
@@ -479,9 +479,9 @@ namespace InstructionSwitcherCompanion
             selection.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
             var availablePanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(0, 0, 10, 0) };
-            var availableHeading = new ThemedLabel { Text = "可用指令", Dock = DockStyle.Top, Height = 22, ThemeMode = themeMode };
+            var availableHeading = new ThemedLabel { Text = UiText.T("可用指令"), Dock = DockStyle.Top, Height = 22, ThemeMode = themeMode };
             var availableHint = new ThemedLabel {
-                Text = "勾选后加入预设",
+                Text = UiText.T("勾选后加入预设"),
                 Dock = DockStyle.Top,
                 Height = 20,
                 ThemeMode = themeMode,
@@ -490,7 +490,7 @@ namespace InstructionSwitcherCompanion
             };
             availableSearch = new ThemedTextBox { Dock = DockStyle.Top, Height = 32, ThemeMode = themeMode };
             availableSearch.TextChanged += delegate { RebuildAvailableInstructions(); };
-            CompanionTheme.SetCueBanner(availableSearch, "搜索指令");
+            CompanionTheme.SetCueBanner(availableSearch, UiText.T("搜索指令"));
             availableInstructions = new ThemedCheckedListBox {
                 Dock = DockStyle.Fill,
                 CheckOnClick = true,
@@ -504,9 +504,9 @@ namespace InstructionSwitcherCompanion
             availablePanel.Controls.Add(availableHeading);
 
             var orderedPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10, 0, 0, 0) };
-            var orderedHeading = new ThemedLabel { Text = "启用顺序", Dock = DockStyle.Top, Height = 22, ThemeMode = themeMode };
+            var orderedHeading = new ThemedLabel { Text = UiText.T("启用顺序"), Dock = DockStyle.Top, Height = 22, ThemeMode = themeMode };
             var orderedHint = new ThemedLabel {
-                Text = "拖动条目调整顺序 · 取消勾选可移除",
+                Text = UiText.T("拖动条目调整顺序 · 取消勾选可移除"),
                 Dock = DockStyle.Top,
                 Height = 20,
                 ThemeMode = themeMode,
@@ -536,7 +536,7 @@ namespace InstructionSwitcherCompanion
 
             presetMeta = new ThemedLabel { Dock = DockStyle.Top, Height = 24, Role = ThemedLabelRole.Secondary, ThemeMode = themeMode, TextAlign = ContentAlignment.MiddleLeft, AutoEllipsis = true };
             presetDefault = new ThemedCheckBox {
-                Text = "设为新任务的默认配置",
+                Text = UiText.T("设为新任务的默认配置"),
                 Dock = DockStyle.Top,
                 Height = 32,
                 ThemeMode = themeMode
@@ -544,7 +544,7 @@ namespace InstructionSwitcherCompanion
             presetDefault.CheckedChanged += PresetEdited;
             presetName = new ThemedTextBox { Dock = DockStyle.Top, Height = 34, ThemeMode = themeMode };
             presetName.TextChanged += PresetEdited;
-            var nameLabel = new Label { Text = "名称", Dock = DockStyle.Top, Height = 24, TextAlign = ContentAlignment.BottomLeft };
+            var nameLabel = new Label { Text = UiText.T("名称"), Dock = DockStyle.Top, Height = 24, TextAlign = ContentAlignment.BottomLeft };
             split.Panel2.Controls.Add(selection); split.Panel2.Controls.Add(presetMeta); split.Panel2.Controls.Add(presetDefault);
             split.Panel2.Controls.Add(presetName); split.Panel2.Controls.Add(nameLabel); split.Panel2.Controls.Add(presetStatus); split.Panel2.Controls.Add(footer);
             page.Controls.Add(split);
@@ -584,7 +584,7 @@ namespace InstructionSwitcherCompanion
                 libraryReady = false;
                 configSignature = "unavailable";
                 if (settings == null) settings = new SettingsDto { version = 3, command = "/choose", instructions = new InstructionDto[0], presets = new PresetDto[0] };
-                instructionStatus.Text = "读取失败：" + error.Message;
+                instructionStatus.Text = UiText.IsEnglish ? "Read failed: " + UiText.Error(error.Message) : "读取失败：" + error.Message;
                 presetStatus.Text = instructionStatus.Text;
             }
         }
@@ -677,17 +677,18 @@ namespace InstructionSwitcherCompanion
             {
                 instructionBody.Text = "";
                 instructionBodyReadFailed = instruction != null;
-                instructionStatus.Text = "正文读取失败：" + error.Message;
+                instructionStatus.Text = UiText.IsEnglish ? "Content read failed: " + UiText.Error(error.Message) : "正文读取失败：" + error.Message;
             }
             int refs = instruction == null ? 0 : LibraryStore.CountPresetReferences(settings, instruction.id);
             string source = instruction == null || String.Equals(instruction.origin, "local", StringComparison.Ordinal)
-                ? "本地创建"
+                ? (UiText.IsEnglish ? "Created locally" : "本地创建")
                 : String.Equals(instruction.origin, "preset-package", StringComparison.Ordinal)
-                    ? "随预设导入" : "通过指令包导入";
+                    ? UiText.T("随预设导入") : (UiText.IsEnglish ? "Imported from an instruction package" : "通过指令包导入");
             if (instruction != null && !String.IsNullOrWhiteSpace(instruction.sourcePackageId))
                 source += " · " + instruction.sourcePackageId;
-            instructionMeta.Text = instruction == null ? "新指令项" :
-                "内部 ID：" + instruction.id + " · 被 " + refs + " 个配置预设引用 · " + source;
+            instructionMeta.Text = instruction == null ? (UiText.IsEnglish ? "New instruction" : "新指令项") :
+                (UiText.IsEnglish ? "Internal ID: " + instruction.id + " · Referenced by " + refs + " presets · " + source :
+                    "内部 ID：" + instruction.id + " · 被 " + refs + " 个配置预设引用 · " + source);
             instructionDirty = false;
             suppressInstructionEvents = false;
             if (editorTabs.SelectedIndex == 1) RefreshPreview();
@@ -702,17 +703,17 @@ namespace InstructionSwitcherCompanion
             newInstruction = true;
             instructionBodyDirty = source != null;
             instructionBodyReadFailed = false;
-            instructionName.Text = source == null ? "" : source.name + " 副本";
+            instructionName.Text = source == null ? "" : source.name + (UiText.IsEnglish ? " copy" : " 副本");
             instructionVisible.Checked = true;
             try { instructionBody.Text = source == null ? "" : LibraryStore.ReadBody(root, source); }
             catch (Exception error)
             {
                 instructionBody.Text = "";
                 instructionBodyReadFailed = source != null;
-                instructionStatus.Text = "正文读取失败：" + error.Message;
+                instructionStatus.Text = UiText.IsEnglish ? "Content read failed: " + UiText.Error(error.Message) : "正文读取失败：" + error.Message;
             }
-            instructionMeta.Text = "新指令项 · 保存后分配稳定 ID";
-            instructionStatus.Text = "待保存";
+            instructionMeta.Text = UiText.IsEnglish ? "New instruction · A stable ID is assigned when saved" : "新指令项 · 保存后分配稳定 ID";
+            instructionStatus.Text = UiText.IsEnglish ? "Unsaved" : "待保存";
             instructionDirty = source != null;
             suppressInstructionEvents = false;
             instructionName.Focus(); instructionName.SelectAll();
@@ -728,36 +729,36 @@ namespace InstructionSwitcherCompanion
                 instructionBodyReadFailed = false;
             }
             instructionDirty = true;
-            instructionStatus.Text = "有未保存修改";
+            instructionStatus.Text = UiText.IsEnglish ? "Unsaved changes" : "有未保存修改";
         }
 
         private bool SaveInstruction()
         {
             if (!libraryReady || String.IsNullOrWhiteSpace(configSignature) || configSignature == "unavailable")
             {
-                instructionStatus.Text = "配置库未就绪，请重新打开管理面板";
+                instructionStatus.Text = UiText.IsEnglish ? "The library is not ready; reopen this window" : "配置库未就绪，请重新打开管理面板";
                 return false;
             }
             string name = (instructionName.Text ?? "").Trim();
             if (name.Length == 0 || name.Length > 200)
             {
-                MessageBox.Show(this, "名称长度需要在 1 到 200 个字符之间。", "保存指令项", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, UiText.IsEnglish ? "Name must contain 1 to 200 characters." : "名称长度需要在 1 到 200 个字符之间。", UiText.IsEnglish ? "Save instruction" : "保存指令项", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
             if (instructionBodyReadFailed)
             {
-                instructionStatus.Text = "正文读取失败，请重新打开管理面板后重试；编辑正文后可以继续保存。";
+                instructionStatus.Text = UiText.IsEnglish ? "Content could not be read. Reopen this window to retry, or edit the content before saving." : "正文读取失败，请重新打开管理面板后重试；编辑正文后可以继续保存。";
                 return false;
             }
             if (Encoding.UTF8.GetByteCount(instructionBody.Text ?? "") > 64000)
             {
-                MessageBox.Show(this, "指令正文超过 64000 字节。", "保存指令项", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, UiText.IsEnglish ? "Instruction content exceeds 64,000 bytes." : "指令正文超过 64000 字节。", UiText.IsEnglish ? "Save instruction" : "保存指令项", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
             try
             {
                 if (LibraryStore.Signature(configFile) != configSignature)
-                    throw new InvalidOperationException("配置库已更新，请重新打开管理面板");
+                    throw new InvalidOperationException(UiText.IsEnglish ? "The library changed; reopen this window" : "配置库已更新，请重新打开管理面板");
                 SettingsDto next = CloneSettings();
                 string now = DateTime.UtcNow.ToString("o");
                 InstructionDto target;
@@ -790,12 +791,12 @@ namespace InstructionSwitcherCompanion
                 instructionDirty = false;
                 instructionBodyDirty = false;
                 Reload(idToSelect, selectedPreset == null ? null : selectedPreset.id);
-                instructionStatus.Text = "已保存";
+                instructionStatus.Text = UiText.IsEnglish ? "Saved" : "已保存";
                 return true;
             }
             catch (Exception error)
             {
-                instructionStatus.Text = "保存失败：" + error.Message;
+                instructionStatus.Text = UiText.IsEnglish ? "Save failed: " + UiText.Error(error.Message) : "保存失败：" + error.Message;
                 return false;
             }
         }
@@ -803,8 +804,9 @@ namespace InstructionSwitcherCompanion
         private bool ConfirmInstructionEdit()
         {
             if (!instructionDirty) return true;
-            DialogResult choice = MessageBox.Show(this, "当前指令项有未保存修改。选择“是”保存，选择“否”放弃修改。",
-                "未保存修改", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            DialogResult choice = MessageBox.Show(this,
+                UiText.IsEnglish ? "The current instruction has unsaved changes. Select Yes to save or No to discard them." : "当前指令项有未保存修改。选择“是”保存，选择“否”放弃修改。",
+                UiText.IsEnglish ? "Unsaved changes" : "未保存修改", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
             if (choice == DialogResult.Yes) return SaveInstruction();
             if (choice == DialogResult.No) { instructionDirty = false; return true; }
             return false;
@@ -831,8 +833,10 @@ namespace InstructionSwitcherCompanion
             if (target == null || !libraryReady) return;
             int presetRefs = LibraryStore.CountPresetReferences(settings, target.id);
             int taskRefs = LibraryStore.CountSessionReferences(stateRoot, target.id);
-            string message = "删除“" + target.name + "”？\r\n\r\n它当前被 " + presetRefs + " 个配置预设和 " + taskRefs + " 个任务引用。删除后会自动清理这些引用。";
-            if (MessageBox.Show(this, message, "删除指令项", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK) return;
+            string message = UiText.IsEnglish
+                ? "Delete " + UiText.Quote(target.name) + "?\r\n\r\nIt is referenced by " + presetRefs + " presets and " + taskRefs + " tasks. Those references will be removed."
+                : "删除“" + target.name + "”？\r\n\r\n它当前被 " + presetRefs + " 个配置预设和 " + taskRefs + " 个任务引用。删除后会自动清理这些引用。";
+            if (MessageBox.Show(this, message, UiText.T("删除指令项"), MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK) return;
             try
             {
                 SettingsDto next = CloneSettings();
@@ -863,12 +867,13 @@ namespace InstructionSwitcherCompanion
                 int cleaned = LibraryStore.CleanSessionReferences(stateRoot, next, target.id);
                 selectedInstruction = null; instructionDirty = false;
                 Reload(null, selectedPreset == null ? null : selectedPreset.id);
-                instructionStatus.Text = "已删除并清理 " + cleaned + " 个任务状态" +
-                    (sharedBody ? "，共用正文已保留" : "");
+                instructionStatus.Text = UiText.IsEnglish
+                    ? "Deleted; cleaned " + cleaned + " task states" + (sharedBody ? "; shared content was kept" : "")
+                    : "已删除并清理 " + cleaned + " 个任务状态" + (sharedBody ? "，共用正文已保留" : "");
             }
             catch (Exception error)
             {
-                instructionStatus.Text = "删除失败：" + error.Message;
+                instructionStatus.Text = UiText.IsEnglish ? "Delete failed: " + UiText.Error(error.Message) : "删除失败：" + error.Message;
             }
         }
 
@@ -965,7 +970,8 @@ namespace InstructionSwitcherCompanion
             presetDefault.Checked = preset != null && String.Equals(settings.defaultPresetId, preset.id, StringComparison.Ordinal);
             orderedIds.Clear();
             if (preset != null) orderedIds.AddRange(preset.instructionIds ?? new string[0]);
-            presetMeta.Text = preset == null ? "新配置预设" : "内部 ID：" + preset.id + " · " + orderedIds.Count + " 条指令";
+            presetMeta.Text = preset == null ? (UiText.IsEnglish ? "New preset" : "新配置预设") :
+                (UiText.IsEnglish ? "Internal ID: " + preset.id + " · " + orderedIds.Count + " instructions" : "内部 ID：" + preset.id + " · " + orderedIds.Count + " 条指令");
             presetDirty = false;
             suppressPresetEvents = false;
             RebuildAvailableInstructions(); RebuildOrderedInstructions();
@@ -976,11 +982,11 @@ namespace InstructionSwitcherCompanion
             if (!ConfirmPresetEdit()) return;
             suppressPresetEvents = true;
             presetList.ClearSelected(); selectedPreset = null; newPreset = true;
-            presetName.Text = source == null ? "" : source.name + " 副本";
+            presetName.Text = source == null ? "" : source.name + (UiText.IsEnglish ? " copy" : " 副本");
             presetDefault.Checked = false; orderedIds.Clear();
             if (source != null) orderedIds.AddRange(source.instructionIds ?? new string[0]);
-            presetMeta.Text = "新配置预设 · 保存后分配稳定 ID";
-            presetStatus.Text = "待保存"; presetDirty = source != null;
+            presetMeta.Text = UiText.IsEnglish ? "New preset · A stable ID is assigned when saved" : "新配置预设 · 保存后分配稳定 ID";
+            presetStatus.Text = UiText.IsEnglish ? "Unsaved" : "待保存"; presetDirty = source != null;
             suppressPresetEvents = false;
             RebuildAvailableInstructions(); RebuildOrderedInstructions();
             presetName.Focus(); presetName.SelectAll();
@@ -989,7 +995,7 @@ namespace InstructionSwitcherCompanion
         private void PresetEdited(object sender, EventArgs e)
         {
             if (suppressPresetEvents) return;
-            presetDirty = true; presetStatus.Text = "有未保存修改";
+            presetDirty = true; presetStatus.Text = UiText.IsEnglish ? "Unsaved changes" : "有未保存修改";
         }
 
         private void RebuildAvailableInstructions()
@@ -1018,7 +1024,8 @@ namespace InstructionSwitcherCompanion
                 if (map.TryGetValue(id, out item)) orderedInstructions.Items.Add(new InstructionListItem(item));
                 else orderedIds.Remove(id);
             }
-            presetMeta.Text = (selectedPreset == null ? "新配置预设" : "内部 ID：" + selectedPreset.id) + " · " + orderedIds.Count + " 条指令";
+            presetMeta.Text = (selectedPreset == null ? (UiText.IsEnglish ? "New preset" : "新配置预设") : (UiText.IsEnglish ? "Internal ID: " : "内部 ID：") + selectedPreset.id) + " · " +
+                (UiText.IsEnglish ? orderedIds.Count + " instructions" : orderedIds.Count + " 条指令");
         }
 
         private void AvailableInstructionChecked(object sender, ItemCheckEventArgs e)
@@ -1028,7 +1035,7 @@ namespace InstructionSwitcherCompanion
             if (item == null) return;
             if (e.NewValue == CheckState.Checked && !orderedIds.Contains(item.Instruction.id)) orderedIds.Add(item.Instruction.id);
             if (e.NewValue != CheckState.Checked) orderedIds.Remove(item.Instruction.id);
-            presetDirty = true; presetStatus.Text = "有未保存修改";
+            presetDirty = true; presetStatus.Text = UiText.IsEnglish ? "Unsaved changes" : "有未保存修改";
             if (IsDisposed || Disposing || !IsHandleCreated) return;
             try
             {
@@ -1047,7 +1054,7 @@ namespace InstructionSwitcherCompanion
             int index = orderedInstructions.SelectedIndex;
             if (index < 0 || index >= orderedIds.Count) return;
             orderedIds.RemoveAt(index); presetDirty = true;
-            presetStatus.Text = "有未保存修改";
+            presetStatus.Text = UiText.IsEnglish ? "Unsaved changes" : "有未保存修改";
             RebuildAvailableInstructions(); RebuildOrderedInstructions();
             if (orderedInstructions.Items.Count > 0)
                 orderedInstructions.SelectedIndex = Math.Min(index, orderedInstructions.Items.Count - 1);
@@ -1153,7 +1160,7 @@ namespace InstructionSwitcherCompanion
                 target = Math.Max(0, Math.Min(target, orderedIds.Count));
                 orderedIds.Insert(target, id);
                 presetDirty = true;
-                presetStatus.Text = "有未保存修改";
+                presetStatus.Text = UiText.IsEnglish ? "Unsaved changes" : "有未保存修改";
                 RebuildOrderedInstructions();
                 orderedInstructions.SelectedIndex = target;
             }
@@ -1169,13 +1176,13 @@ namespace InstructionSwitcherCompanion
         {
             if (!libraryReady || String.IsNullOrWhiteSpace(configSignature) || configSignature == "unavailable")
             {
-                presetStatus.Text = "配置库未就绪，请重新打开管理面板";
+                presetStatus.Text = UiText.IsEnglish ? "The library is not ready; reopen this window" : "配置库未就绪，请重新打开管理面板";
                 return false;
             }
             string name = (presetName.Text ?? "").Trim();
             if (name.Length == 0 || name.Length > 200)
             {
-                MessageBox.Show(this, "名称长度需要在 1 到 200 个字符之间。", "保存配置预设", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, UiText.IsEnglish ? "Name must contain 1 to 200 characters." : "名称长度需要在 1 到 200 个字符之间。", UiText.IsEnglish ? "Save preset" : "保存配置预设", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
             try
@@ -1196,19 +1203,20 @@ namespace InstructionSwitcherCompanion
                 LibraryStore.Save(configFile, root, next, configSignature);
                 presetDirty = false;
                 string id = target.id; Reload(selectedInstruction == null ? null : selectedInstruction.id, id);
-                presetStatus.Text = "已保存"; return true;
+                presetStatus.Text = UiText.IsEnglish ? "Saved" : "已保存"; return true;
             }
             catch (Exception error)
             {
-                presetStatus.Text = "保存失败：" + error.Message; return false;
+                presetStatus.Text = UiText.IsEnglish ? "Save failed: " + UiText.Error(error.Message) : "保存失败：" + error.Message; return false;
             }
         }
 
         private bool ConfirmPresetEdit()
         {
             if (!presetDirty) return true;
-            DialogResult choice = MessageBox.Show(this, "当前配置预设有未保存修改。选择“是”保存，选择“否”放弃修改。",
-                "未保存修改", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            DialogResult choice = MessageBox.Show(this,
+                UiText.IsEnglish ? "The current preset has unsaved changes. Select Yes to save or No to discard them." : "当前配置预设有未保存修改。选择“是”保存，选择“否”放弃修改。",
+                UiText.IsEnglish ? "Unsaved changes" : "未保存修改", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
             if (choice == DialogResult.Yes) return SavePreset();
             if (choice == DialogResult.No) { presetDirty = false; return true; }
             return false;
@@ -1227,8 +1235,11 @@ namespace InstructionSwitcherCompanion
             if (!ConfirmInstructionEdit() || !ConfirmPresetEdit()) return;
             PresetDto target = selectedPreset;
             if (target == null || !libraryReady) return;
-            if (MessageBox.Show(this, "删除配置预设“" + target.name + "”？任务中已启用的指令项会继续保留。",
-                "删除配置预设", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK) return;
+            string deletePresetMessage = UiText.IsEnglish
+                ? "Delete preset " + UiText.Quote(target.name) + "? Instructions already enabled in tasks will remain enabled."
+                : "删除配置预设“" + target.name + "”？任务中已启用的指令项会继续保留。";
+            if (MessageBox.Show(this, deletePresetMessage,
+                UiText.T("删除配置预设"), MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK) return;
             try
             {
                 SettingsDto next = CloneSettings();
@@ -1237,9 +1248,9 @@ namespace InstructionSwitcherCompanion
                 LibraryStore.Save(configFile, root, next, configSignature);
                 int cleaned = LibraryStore.CleanPresetReferences(stateRoot, next, target.id);
                 selectedPreset = null; presetDirty = false; Reload(selectedInstruction == null ? null : selectedInstruction.id, null);
-                presetStatus.Text = "已删除配置预设，清理 " + cleaned + " 个任务状态";
+                presetStatus.Text = UiText.IsEnglish ? "Preset deleted; cleaned " + cleaned + " task states" : "已删除配置预设，清理 " + cleaned + " 个任务状态";
             }
-            catch (Exception error) { presetStatus.Text = "删除失败：" + error.Message; }
+            catch (Exception error) { presetStatus.Text = UiText.IsEnglish ? "Delete failed: " + UiText.Error(error.Message) : "删除失败：" + error.Message; }
         }
 
         private void ExportSelectedInstruction(object sender, EventArgs e)
@@ -1249,16 +1260,16 @@ namespace InstructionSwitcherCompanion
             InstructionDto instruction = selected == null ? selectedInstruction : selected.Instruction;
             if (instruction == null)
             {
-                instructionStatus.Text = "请选择要导出的指令项";
+                instructionStatus.Text = UiText.IsEnglish ? "Select an instruction to export" : "请选择要导出的指令项";
                 return;
             }
             try
             {
                 PackageDocumentDto document = PackageExchange.CreateInstructionPackage(root, settings,
                     new[] { instruction.id }, instruction.name);
-                ExportDocument(document, "导出指令包", SafeFileName(instruction.name) + ".ispkg.json");
+                ExportDocument(document, UiText.IsEnglish ? "Export instruction package" : "导出指令包", SafeFileName(instruction.name) + ".ispkg.json");
             }
-            catch (Exception error) { SetLibraryStatus("导出失败：" + error.Message); }
+            catch (Exception error) { SetLibraryStatus(UiText.IsEnglish ? "Export failed: " + UiText.Error(error.Message) : "导出失败：" + error.Message); }
         }
 
         private void ExportSelectedPreset(object sender, EventArgs e)
@@ -1268,15 +1279,15 @@ namespace InstructionSwitcherCompanion
             PresetDto preset = selected == null ? selectedPreset : selected.Preset;
             if (preset == null)
             {
-                presetStatus.Text = "请选择要导出的配置预设";
+                presetStatus.Text = UiText.IsEnglish ? "Select a preset to export" : "请选择要导出的配置预设";
                 return;
             }
             try
             {
                 PackageDocumentDto document = PackageExchange.CreatePresetPackage(root, settings, preset.id);
-                ExportDocument(document, "导出配置预设包", SafeFileName(preset.name) + ".ispkg.json");
+                ExportDocument(document, UiText.IsEnglish ? "Export preset package" : "导出配置预设包", SafeFileName(preset.name) + ".ispkg.json");
             }
-            catch (Exception error) { SetLibraryStatus("导出失败：" + error.Message); }
+            catch (Exception error) { SetLibraryStatus(UiText.IsEnglish ? "Export failed: " + UiText.Error(error.Message) : "导出失败：" + error.Message); }
         }
 
         private void ExportBackup(object sender, EventArgs e)
@@ -1285,24 +1296,24 @@ namespace InstructionSwitcherCompanion
             try
             {
                 PackageDocumentDto document = PackageExchange.CreateBackup(root, settings);
-                ExportDocument(document, "备份整个指令库",
+                ExportDocument(document, UiText.IsEnglish ? "Back up instruction library" : "备份整个指令库",
                     "instruction-switcher-backup-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".ispkg.json");
             }
-            catch (Exception error) { SetLibraryStatus("备份失败：" + error.Message); }
+            catch (Exception error) { SetLibraryStatus(UiText.IsEnglish ? "Backup failed: " + UiText.Error(error.Message) : "备份失败：" + error.Message); }
         }
 
         private void ExportDocument(PackageDocumentDto document, string title, string fileName)
         {
             using (var dialog = new SaveFileDialog {
                 Title = title,
-                Filter = "Instruction Switcher 包 (*.ispkg.json)|*.ispkg.json|JSON 文件 (*.json)|*.json",
+                Filter = UiText.IsEnglish ? "Instruction Switcher packages (*.ispkg.json)|*.ispkg.json|JSON files (*.json)|*.json" : "Instruction Switcher 包 (*.ispkg.json)|*.ispkg.json|JSON 文件 (*.json)|*.json",
                 FileName = fileName,
                 AddExtension = true
             })
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
                 PackageExchange.WritePackage(dialog.FileName, document);
-                SetLibraryStatus("已导出到 " + dialog.FileName);
+                SetLibraryStatus(UiText.IsEnglish ? "Exported to " + dialog.FileName : "已导出到 " + dialog.FileName);
             }
         }
 
@@ -1319,8 +1330,8 @@ namespace InstructionSwitcherCompanion
         private void ImportPackageFromFile(bool backupOnly)
         {
             using (var dialog = new OpenFileDialog {
-                Title = backupOnly ? "恢复指令库备份" : "导入指令或配置预设包",
-                Filter = "Instruction Switcher 包 (*.ispkg.json;*.json)|*.ispkg.json;*.json|JSON 文件 (*.json)|*.json"
+                Title = backupOnly ? UiText.T("恢复指令库备份") : (UiText.IsEnglish ? "Import instruction or preset package" : "导入指令或配置预设包"),
+                Filter = UiText.IsEnglish ? "Instruction Switcher packages (*.ispkg.json;*.json)|*.ispkg.json;*.json|JSON files (*.json)|*.json" : "Instruction Switcher 包 (*.ispkg.json;*.json)|*.ispkg.json;*.json|JSON 文件 (*.json)|*.json"
             })
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
@@ -1328,10 +1339,10 @@ namespace InstructionSwitcherCompanion
                 {
                     if (!ConfirmInstructionEdit() || !ConfirmPresetEdit()) return;
                     if (!libraryReady || String.IsNullOrWhiteSpace(configSignature) || configSignature == "unavailable")
-                        throw new InvalidOperationException("配置库尚未就绪");
+                        throw new InvalidOperationException(UiText.IsEnglish ? "The library is not ready" : "配置库尚未就绪");
                     PackageDocumentDto document = PackageExchange.ReadPackage(dialog.FileName);
                     if (backupOnly && document.kind != PackageKinds.Backup)
-                        throw new InvalidDataException("所选文件不是整库备份");
+                        throw new InvalidDataException(UiText.IsEnglish ? "The selected file is not a full library backup" : "所选文件不是整库备份");
                     ImportPlan plan = PackageExchange.PreviewImport(document, settings, root, configSignature);
                     bool applyToTask;
                     string presetKeyToApply;
@@ -1347,12 +1358,16 @@ namespace InstructionSwitcherCompanion
                     instructionDirty = false;
                     presetDirty = false;
                     Reload(null, null);
-                    string verb = plan.replaceLibrary ? "恢复完成" : "导入完成";
-                    SetLibraryStatus(verb + "：" +
-                        (result.createdInstructions + result.updatedInstructions + result.reusedInstructions) + " 条指令，" +
-                        (result.createdPresets + result.updatedPresets + result.reusedPresets) + " 个配置预设");
+                    int instructionCount = result.createdInstructions + result.updatedInstructions + result.reusedInstructions;
+                    int presetCount = result.createdPresets + result.updatedPresets + result.reusedPresets;
+                    string summary = UiText.IsEnglish
+                        ? (plan.replaceLibrary ? "Restore complete: " : "Import complete: ") + instructionCount + " instructions, " + presetCount + " presets"
+                        : (plan.replaceLibrary ? "恢复完成" : "导入完成") + "：" + instructionCount + " 条指令，" + presetCount + " 个配置预设";
+                    SetLibraryStatus(summary);
                 }
-                catch (Exception error) { SetLibraryStatus((backupOnly ? "恢复失败：" : "导入失败：") + error.Message); }
+                catch (Exception error) { SetLibraryStatus(UiText.IsEnglish
+                    ? (backupOnly ? "Restore failed: " : "Import failed: ") + UiText.Error(error.Message)
+                    : (backupOnly ? "恢复失败：" : "导入失败：") + error.Message); }
             }
         }
 

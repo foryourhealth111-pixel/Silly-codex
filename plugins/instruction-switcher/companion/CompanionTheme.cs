@@ -648,13 +648,20 @@ namespace InstructionSwitcherCompanion
             if (value.IndexOf("失败", StringComparison.Ordinal) >= 0 ||
                 value.IndexOf("异常", StringComparison.Ordinal) >= 0 ||
                 value.IndexOf("错误", StringComparison.Ordinal) >= 0 ||
-                value.IndexOf("无效", StringComparison.Ordinal) >= 0)
+                value.IndexOf("无效", StringComparison.Ordinal) >= 0 ||
+                value.IndexOf("failed", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("invalid", StringComparison.OrdinalIgnoreCase) >= 0)
                 return StatusTone.Danger;
             if (value.IndexOf("等待", StringComparison.Ordinal) >= 0 ||
                 value.IndexOf("待确认", StringComparison.Ordinal) >= 0 ||
                 value.IndexOf("尚未", StringComparison.Ordinal) >= 0 ||
                 value.IndexOf("待保存", StringComparison.Ordinal) >= 0 ||
-                value.IndexOf("只读", StringComparison.Ordinal) >= 0)
+                value.IndexOf("只读", StringComparison.Ordinal) >= 0 ||
+                value.IndexOf("waiting", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("detecting", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("unsaved", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                value.IndexOf("read-only", StringComparison.OrdinalIgnoreCase) >= 0)
                 return StatusTone.Warning;
             return StatusTone.Accent;
         }
@@ -1714,9 +1721,11 @@ namespace InstructionSwitcherCompanion
         {
             string value = summaryText;
             if (!Enabled)
-                value = String.IsNullOrWhiteSpace(value) ? "当前为只读预览。" : value + "；当前为只读预览。";
+                value = String.IsNullOrWhiteSpace(value) ? UiText.T("当前为只读预览。") :
+                    value + (UiText.IsEnglish ? "; " : "；") + UiText.T("当前为只读预览。");
             else if (ReorderAvailable)
-                value = String.IsNullOrWhiteSpace(value) ? "可拖动调整启用顺序。" : value + "；可拖动调整启用顺序。";
+                value = String.IsNullOrWhiteSpace(value) ? UiText.T("可拖动调整启用顺序。") :
+                    value + (UiText.IsEnglish ? "; " : "；") + UiText.T("可拖动调整启用顺序。");
             AccessibleDescription = value;
         }
 
@@ -1851,7 +1860,7 @@ namespace InstructionSwitcherCompanion
             statusTone = StatusTone.Accent;
             Cursor = Cursors.Hand;
             AccessibleRole = AccessibleRole.PushButton;
-            AccessibleName = "展开指令面板";
+            AccessibleName = UiText.T("展开指令面板");
             TabStop = true;
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
                 ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);

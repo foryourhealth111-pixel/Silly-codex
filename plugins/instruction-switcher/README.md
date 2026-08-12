@@ -1,5 +1,7 @@
 # Instruction Switcher
 
+English version: [README.en.md](README.en.md)  ·  [Root English README](../../README.en.md)
+
 > 把每个 Codex 任务的工作方式变成可见、可切换、可恢复的本地控制。
 
 它通过 `SessionStart` 与 `UserPromptSubmit` Hook 为每个任务保存独立的指令选择，并提供自动出现的 Windows 桌面伴随窗。
@@ -72,6 +74,8 @@ codex plugin remove instruction-switcher@silly-codex
 打开或恢复 Codex 任务时，`SessionStart` Hook 会自动启动伴随窗。桌面端恢复已有任务后，首次提交消息时 `UserPromptSubmit` Hook 也会启动伴随窗。窗口置顶停靠在屏幕右下角，可以拖动，也可以通过系统托盘显示、隐藏或退出。Hook 启动流程不会创建或改写 Windows 登录启动项。
 
 伴随窗提供白天与黑夜两套主题。白天模式使用白色和浅灰，黑夜模式使用灰黑色；绿色、琥珀色和红色仅用于启用、等待和错误状态。主题选择会随窗口偏好保存。
+
+伴随窗支持中文与英文界面。底部更多菜单和托盘菜单都提供语言切换，选择会保存在 `runtime/window-position.json` 中。用户已有的指令名称、配置预设名称和 Markdown 正文保持原样。英文环境中首次创建的指令库会使用英文示例内容。
 
 右上角的折叠按钮会把完整面板收束为约 `58 × 58` 的悬浮球。单击悬浮球可恢复面板，拖动悬浮球可调整位置，按 `Esc` 也可从展开面板折叠。展开面板和悬浮球分别保存位置、显示器、停靠边和边距；显示器、DPI 或任务栏工作区变化后，窗口会自动限制在当前可用区域内。
 
