@@ -126,6 +126,25 @@ npx --yes github:foryourhealth111-pixel/Silly-codex
 
 首次运行会创建六条可编辑的初始指令。预设列表初始为空，第一次有效配置通常只需准备一条符合个人习惯的指令，再把它保存到一个预设中。
 
+### CCS 与新建对话注意事项
+
+**使用 CCS 时：** Silly Codex 安装过程会注册一个插件并创建两个 Hook。若 CCS 尚未同步当前 Codex 配置，安装可能看似失败，伴随窗也可能没有拉起。请在 CCS 的通用配置中确认包含以下内容：
+
+```toml
+[plugins."instruction-switcher@silly-codex"]
+enabled = true
+
+[hooks.state."instruction-switcher@silly-codex:hooks/hooks.json:session_start:0:0"]
+trusted_hash = "<generated-hash>"
+
+[hooks.state."instruction-switcher@silly-codex:hooks/hooks.json:user_prompt_submit:0:0"]
+trusted_hash = "<generated-hash>"
+```
+
+`<generated-hash>` 代表 Codex 生成的实际值。请在当前使用的 Codex 配置中重新启用插件，并审核、信任这两个 Hook，让 Codex 写入当前值。维护者本人也踩过这个坑 :rofl:。
+
+**新建对话时：** 首条消息产生前，Codex 可能尚未创建对话记录和 session ID，Silly Codex 伴随窗此时无法发现该对话。先发送一条消息生成会话记录，再选择或应用规则；随后发送的普通消息会获得已启用的指令。
+
 <details>
 <summary>手动安装 Codex marketplace</summary>
 
