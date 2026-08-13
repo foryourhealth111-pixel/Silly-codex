@@ -1,323 +1,233 @@
-# Silly-codex
-
-English documentation: [README.en.md](README.en.md)
-
 <div align="center">
 
-**给 Codex 一块随任务移动的指令控制台。**
+# Silly Codex
 
-把常用的工作方式保存成预设，在当前任务里随时打开、关闭、排序和切换。配置由 Hook 自动注入，Windows 伴随窗负责把状态放到眼前。
+**Reusable instructions that follow the way you work.**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-1f7a6b.svg)](https://github.com/foryourhealth111-pixel/Silly-codex/releases)
+**[English](README.md) | [简体中文](README.zh-CN.md)**
+
 [![License](https://img.shields.io/badge/license-Apache--2.0-2f6f9f.svg)](LICENSE)
 [![Node tests](https://github.com/foryourhealth111-pixel/Silly-codex/actions/workflows/node-tests.yml/badge.svg)](https://github.com/foryourhealth111-pixel/Silly-codex/actions/workflows/node-tests.yml)
 [![Windows build](https://github.com/foryourhealth111-pixel/Silly-codex/actions/workflows/windows.yml/badge.svg)](https://github.com/foryourhealth111-pixel/Silly-codex/actions/workflows/windows.yml)
 
 </div>
 
-## 30 秒看懂它怎么工作
-
-### 当前任务里，哪些指令会生效
+Save the small rules that shape good AI collaboration, combine them for each task, and apply the active set to each normal message in that task.
 
 <div align="center">
 
-<a href="docs/assets/instruction-switcher-overview.png"><img src="docs/assets/instruction-switcher-overview.png" alt="Silly-codex 功能总览：自动跟随任务、代码审查预设、指令开关与 Hook 已读取状态" width="418"></a>
+<a href="docs/assets/instruction-switcher-overview-en.png"><img src="docs/assets/instruction-switcher-overview-en.png" alt="Silly Codex companion showing the active task, a preset, ordered instructions, and Hook acknowledgement" width="418"></a>
 
 <br>
-<sub>原生尺寸 PNG。图中任务与会话信息均为合成演示数据，控件和状态来自真实 Windows 伴随窗。</sub>
+<sub>The screenshot uses a synthetic task and a demo preset. New installations include six editable instructions and no presets.</sub>
 
 </div>
 
-这张图集中回答三个最重要的问题：面板正在控制哪个任务、当前启用了哪些指令、Hook 是否已经读取最新状态。截图使用独立的合成演示库，内容不代表新安装的默认指令。
+## What is Silly Codex?
 
-### 从选择预设到下一条消息生效
+Silly Codex is a Codex plugin for managing reusable instructions. A rule can be as small as "reply in Chinese," "use this code style," "run tests first," or "return a table." Each rule lives as its own Markdown instruction instead of disappearing into chat history or growing inside one large prompt file.
 
-<div align="center">
+You choose an ordered set of instructions for the current task. The plugin stores that selection locally, and its `UserPromptSubmit` Hook adds the enabled instruction bodies to each normal message. A Windows companion keeps the active task, preset, order, and Hook acknowledgement visible.
 
-<a href="docs/assets/instruction-switcher-workflow.gif"><img src="docs/assets/instruction-switcher-workflow.gif" alt="Silly-codex 功能流程：跟随任务、应用预设、查看组合、微调指令、Hook 读取、收起悬浮球" width="794"></a>
+The instruction library is shared across tasks. Each Codex task keeps its own selection, and an optional default preset can initialize new tasks. This gives long-running preferences a stable home while leaving room for temporary, task-specific changes.
 
-<br>
-<sub>原生尺寸功能动图。依次展示任务跟随、应用预设、单条微调、Hook 回执和悬浮球。</sub>
+## Why Silly Codex?
 
-</div>
+Small preferences matter, yet they are easy to lose between conversations. Copying a large prompt into every task also makes it hard to tell which rules are active.
 
-动图对应一次完整操作：识别当前任务、选择配置预设、查看启用顺序、微调一条指令、等待 `Hook 已读取`、收起为悬浮球。每一帧都使用合成任务数据和演示指令库，公开素材不包含本机路径、真实会话 ID 或聊天内容。
-
-## 一句话理解
-
-你可以把它看成三层配合：
-
-| 层 | 负责什么 | 你能感受到的结果 |
+| Common problem | How Silly Codex handles it | Result |
 | --- | --- | --- |
-| **Hook** | 在 `SessionStart` 和 `UserPromptSubmit` 时读取任务状态 | 每个任务拥有自己的指令组合 |
-| **本地状态** | 保存指令正文、预设和任务开关 | 关闭 Codex 后配置仍然保留 |
-| **Windows 伴随窗** | 跟随当前任务，提供可视化开关和悬浮球 | 选择规则时不用离开 Codex |
+| Language, style, testing, and output preferences are scattered across chats | Save each preference as an editable instruction | Mature rules remain available after a conversation ends |
+| Review, implementation, research, and documentation need different guidance | Build ordered presets and adjust them per task | Each task receives a focused combination |
+| A new conversation starts without your established working habits | Apply a saved preset or choose a default preset for new tasks | Familiar collaboration patterns return quickly |
+| A temporary rule leaks into unrelated work | Store the enabled list under the Codex session key | Existing tasks resume their own selections |
+| A useful rule set is difficult to move or share | Export an instruction, a preset with its dependencies, or a library backup | Rules can move between machines and people as local files |
 
-核心注入链由 Hook 完成。窗口承担控制和反馈。窗口暂时不可见时，`/choose` 命令仍可管理当前任务。
+## Core features
 
-## 它解决的日常问题
-
-长时间使用 Codex 时，工作会在代码审查、测试、重构、写文档等模式之间切换。每种模式都有自己的要求，手动复制长提示会带来记忆负担，也容易把上一项工作的规则带到下一项任务。
-
-Silly-codex 把这段切换变成一个可见的动作：
-
-| 以前常见的操作 | 使用 Silly-codex 后 |
+| Capability | What it gives you |
 | --- | --- |
-| 复制一段长提示，再检查有没有漏句子 | 选择一个预设，下一条消息自动读取 |
-| 在全局配置里反复改规则 | 在当前任务里独立开关和排序 |
-| 忘记当前任务启用了哪些约束 | 面板显示当前任务和已启用数量 |
-| 窗口挡住编辑区域 | 折叠成约 `58 × 58` 的悬浮球，或交给托盘 |
-| 新任务继承了旧任务的临时设置 | 任务状态按会话键分开保存 |
+| Instruction library | Create, edit, search, hide, and delete named Markdown instructions |
+| Ordered presets | Combine instructions for a scenario, control their injection order, and save the result for reuse |
+| Per-task state | Keep independent enabled lists for parallel Codex tasks and restore them when those tasks resume |
+| Runtime controls | Apply a preset, toggle individual instructions, reorder them, or undo a preset change from the companion |
+| Portable packages | Preview and import `.ispkg.json` files with create, reuse, update, copy, or skip decisions |
+| Local-first storage | Keep the library, presets, and task state under your Codex data directory |
+| Window-free fallback | Manage the current task with `/choose` commands when the companion is hidden or unavailable |
 
-## 运行链路
+The Windows companion can follow the task selected in the Codex sidebar. It also exposes discovered recent tasks as explicit targets. The interface can remain expanded, collapse to a small floating button, or stay in the system tray.
+
+## How it works
 
 ```mermaid
 flowchart LR
-    A[Codex 启动或提交消息] --> B[SessionStart / UserPromptSubmit Hook]
-    B --> C[读取当前任务状态]
-    C --> D[Windows 伴随窗]
-    D --> E[选择预设或切换指令]
-    E --> F[写回本地 sessions 状态]
-    F --> G[下一条普通消息]
-    G --> H[Hook 注入启用的 Markdown 指令]
+    A["Create reusable instructions"] --> B["Combine them in a preset"]
+    B --> C["Select or adjust the current task"]
+    C --> D["Save ordered task state locally"]
+    D --> E["Submit a normal Codex message"]
+    E --> F["Hook injects the enabled Markdown"]
+    F --> G["Companion shows the acknowledgement"]
 ```
 
-这条链路把“选择规则”和“执行任务”分开。Hook 只处理状态读取和指令注入，伴随窗只提供控制界面，Codex 继续负责对话和代码工作。
+1. Instructions and presets live in one local library.
+2. Each Codex session stores an ordered list of enabled instruction IDs.
+3. Applying a preset replaces that list. Manual toggles or drag-and-drop changes produce a custom selection.
+4. On the next normal message, the Hook reads the latest state and injects the instruction bodies in order.
+5. `/choose` control messages are handled by the Hook and kept out of the model context.
 
-## 为什么这样设计
+<div align="center">
 
-### 1. 把配置放到任务边界里
+<a href="docs/assets/instruction-switcher-workflow-en.gif"><img src="docs/assets/instruction-switcher-workflow-en.gif" alt="Silly Codex workflow showing task tracking, preset selection, instruction adjustment, Hook acknowledgement, and the floating button" width="794"></a>
 
-每个任务都有自己的状态文件和启用顺序。代码审查、测试、写作等工作可以同时进行，规则互相独立。用户切换任务时，面板跟随任务，记忆成本随之下降。
+<br>
+<sub>Synthetic task data demonstrates the real Windows companion workflow.</sub>
 
-### 2. 把隐性的提示变成可见的控制面
+</div>
 
-长提示通常藏在聊天记录或全局配置里。面板把当前任务、预设名称、启用数量和每条指令直接展示出来。用户可以快速确认当前规则，也可以立即撤销一次临时选择。
+## Typical use cases
 
-### 3. 让 Hook 与伴随窗各司其职
+- Save code style, response language, testing expectations, and output formats as separate instructions.
+- Create a strict review preset for one project and a concise implementation preset for another.
+- Start a new task with a default collaboration baseline, then add a temporary rule without changing other tasks.
+- Resume an older task and recover the instruction order it used previously.
+- Export a proven review or writing preset, including every instruction it needs, for a teammate or community member.
+- Keep a personal library on one machine, then move it with a full library backup.
 
-Hook 负责可靠地读取和注入内容。伴随窗负责选择、排序和反馈。两部分边界清晰，窗口生命周期变化不会改变核心注入逻辑，命令行入口也能覆盖无窗口场景。
+## Quick start
 
-### 4. 用三种可见性适应不同工作节奏
+### Requirements
 
-展开面板适合集中配置，悬浮球适合快速回到控制面，托盘适合长时间保持后台运行。用户可以在“看得见”和“尽量少打扰”之间自由切换。
-
-### 5. 本地优先，迁移可控
-
-指令正文、预设和任务状态保存在用户自己的目录。导入导出由用户主动操作，备份可以跟随个人工作流保存。项目的默认运行路径没有遥测和远程同步，排查问题时也更容易定位文件。
-
-这些设计带来的直接便利：
-
-| 设计取舍 | 用户获得的便利 |
+| Component | Requirement |
 | --- | --- |
-| 任务级状态 | 多个任务并行时，规则不会串线 |
-| 可见的开关和计数 | 提交消息前可以快速核对当前模式 |
-| Hook 与窗口分层 | 窗口暂时隐藏时，注入链仍然可用 |
-| 面板、悬浮球、托盘 | 配置、快速切换、后台驻留各有入口 |
-| 本地文件库 | 内容可编辑、可备份、可迁移，数据边界清楚 |
+| Codex | Desktop environment with plugin support and the `SessionStart` and `UserPromptSubmit` Hooks |
+| Codex CLI | Available on `PATH` for installation |
+| Node.js | Version 20 or newer |
+| Windows | Windows 10/11 with an interactive desktop for the full companion experience |
 
-## 功能地图
+The Hook and local library are Node.js based. The visual companion starts only on Windows.
 
-### 任务级控制
+### Install
 
-- 自动跟随 Codex 侧栏当前选中的任务。
-- 从最近任务列表中显式指定写入目标。
-- 每个任务保存独立的启用列表和顺序。
-- 当前任务切换后，面板同步显示新的状态。
+The current installer is fetched directly from the GitHub repository. Run this command in PowerShell:
 
-### 预设与指令库
+```powershell
+npx --yes github:foryourhealth111-pixel/Silly-codex
+```
 
-- 新安装默认提供六条可编辑指令，内容与项目当前维护的默认工作方式一致。
-- 初始配置预设为空；用户可以按自己的工作流保存组合。
-- 拖动已启用指令，调整注入顺序。
-- 编辑 Markdown 正文、排序、导入、导出和备份。
-- 修改后的预设会显示为自定义配置，便于识别当前差异。
+The installer registers or upgrades the `silly-codex` marketplace, then installs `instruction-switcher@silly-codex`. The package and plugin have no third-party npm runtime dependencies, and the installer uses no lifecycle or `postinstall` script.
 
-### 伴随窗体验
+After installation:
 
-- `SessionStart` 自动启动，右下角置顶停靠。
-- 展开面板、悬浮球、系统托盘三种入口。
-- 深色与浅色主题，主题选择会保存。
-- “设置”面板集中管理界面语言、主题和数据目录。
-- Codex 进入后台时自动抑制窗口，回到前台后恢复上次显示形态。
-- `Esc` 可以把面板收束为悬浮球，单击悬浮球恢复面板。
+1. Review and trust the `SessionStart` and `UserPromptSubmit` Hooks in Codex plugin settings.
+2. Restart Codex or open a new task.
+3. Open **Settings > Instruction library** in the companion. Edit a starter instruction or create one for a preference you use often.
+4. Open **Presets**, create a preset, choose its instructions, and drag them into the required order.
+5. Return to the companion, apply the preset, and submit a normal message.
 
-### 无窗口控制
+The first run creates six editable starter instructions. The preset list starts empty, so your first useful setup is usually one instruction and one preset that match your own workflow.
 
-在消息框中发送下面的控制命令。命令由 Hook 处理，控制文本不会进入模型上下文。
+<details>
+<summary>Manual marketplace installation</summary>
+
+```powershell
+codex plugin marketplace add foryourhealth111-pixel/Silly-codex --ref main
+codex plugin add instruction-switcher@silly-codex
+```
+
+</details>
+
+### Control without the companion
+
+Send these commands in the Codex message box. `/choose list` shows the IDs needed by the other commands.
 
 ```text
+/choose help
 /choose status
 /choose list
+/choose preset <preset-id>
 /choose set <instruction-id-1>,<instruction-id-2>
 /choose on <instruction-id>
 /choose off <instruction-id>
 /choose clear
 ```
 
-## 快速安装
+The Hook handles these messages as controls, so their text is not sent to the model.
 
-### 方式一：GitHub-backed `npx`（推荐）
+## Import, export, and sharing
 
-先安装 [Node.js LTS](https://nodejs.org/)，然后在 PowerShell 执行：
+Open **Settings** in the companion to work with portable package files:
 
-```powershell
-npx --yes github:foryourhealth111-pixel/Silly-codex
-```
+| Action | Where | Package contents |
+| --- | --- | --- |
+| Export an instruction | **Instruction library > Export selected instruction** | The selected instruction and its Markdown body |
+| Export a preset | **Presets > Export preset** | The preset plus every instruction it references |
+| Import a package | **Import package** | A preview of incoming instructions, presets, dependencies, and conflicts |
+| Back up the library | **More > Back up library** | Instructions, presets, the control command, and the default preset |
+| Restore a backup | **More > Restore backup** | Replaces the current instruction library and presets after confirmation |
 
-安装器会完成以下动作：
+Imports are reviewed before anything is written. For each match or conflict, the preview can create a new item, reuse identical local content, update an imported item, keep the local version and create a copy, or skip the item. A preset package carries its complete instruction dependency set, so recipients do not need to recreate the preset by hand.
 
-1. 通过 Codex 官方 CLI 登记 `silly-codex` marketplace。
-2. 安装 `instruction-switcher@silly-codex`。
-3. 保持安装过程零第三方依赖，安装器自身也不使用 `postinstall` 脚本。
+Share the resulting `.ispkg.json` file through any channel you already use. Silly Codex does not provide cloud sync, accounts, or public sharing links.
 
-当前命令直接从 GitHub 获取仓库内容。npm registry 的短命令 `npx silly-codex` 会在正式发布 npm 包后启用。
+> A full library backup does not include per-task session state or window, language, and theme preferences. Restoring a backup replaces the current library and presets; review the preview before confirming.
 
-### 方式二：全局安装 GitHub 命令
+## Compared with `AGENTS.md` and skills
 
-```powershell
-npm install --global github:foryourhealth111-pixel/Silly-codex
-silly-codex install
-```
+Silly Codex, [`AGENTS.md`](https://developers.openai.com/codex/guides/agents-md/), and [skills](https://developers.openai.com/codex/skills/) solve different parts of instruction management.
 
-这条方式适合需要多次升级或在多台 Windows 机器上重复安装的场景。
+| | Silly Codex | `AGENTS.md` | Skills |
+| --- | --- | --- | --- |
+| Primary use | Small behavior rules and personal preferences | Stable global or repository guidance | Repeatable task workflows and capabilities |
+| Content unit | A named Markdown instruction | A scoped Markdown file | A `SKILL.md` package with optional scripts and resources |
+| Activation | Visual per-task selection or `/choose`; applied to normal messages | Discovered from global and directory scope when a run starts | Invoked explicitly or selected when its description matches the task |
+| Composition | Ordered items saved as presets and adjusted at runtime | Layered files combined by directory precedence | One or more self-contained skill packages |
+| Sharing | Exportable instruction and preset packages | Copy or commit the Markdown files | Share the skill directory or distribute it in a plugin |
+| Best fit | Preferences that change by task and need quick, visible switching | Rules that should consistently follow a user, repository, or subtree | Procedures that need detailed steps, references, tools, or scripts |
 
-### 方式三：Codex marketplace 手工安装
+They work well together. Keep repository invariants in `AGENTS.md`, use skills for complete procedures, and use Silly Codex for the small, frequently recombined preferences that shape day-to-day output.
 
-```powershell
-codex plugin marketplace add foryourhealth111-pixel/Silly-codex --ref main
-codex plugin add instruction-switcher@silly-codex
-```
+## FAQ
 
-安装完成后，在 Codex 的插件设置里审核并信任 `SessionStart` 与 `UserPromptSubmit` Hook。重新启动 Codex，或创建一个新任务，伴随窗会自动出现。
+### Does every new task receive all starter instructions?
 
-### 从旧的 personal 安装迁移
+No. A new installation contains six editable instruction entries, but no preset and no enabled selection. You decide what to apply. If you set a default preset in **Settings > Presets**, new tasks start with that ordered combination.
 
-系统里存在 `instruction-switcher@personal` 时，先完全退出 Codex，再执行：
+### What persists across conversations?
 
-```powershell
-npx --yes github:foryourhealth111-pixel/Silly-codex --replace-personal
-```
+The instruction library and presets are shared locally. Each discovered Codex session keeps its own enabled list and order. Returning to an existing task restores that task's selection; a new task uses the default preset only when one is configured.
 
-手工迁移也可以使用：
+### What happens after I edit an instruction?
 
-```powershell
-codex plugin remove instruction-switcher@personal
-codex plugin marketplace add foryourhealth111-pixel/Silly-codex --ref main
-codex plugin add instruction-switcher@silly-codex
-```
+Presets and task state reference stable instruction IDs. The next Hook read uses the updated Markdown wherever that instruction is enabled.
 
-迁移会保留 `%CODEX_HOME%\instruction-switcher` 下的指令库、预设和任务状态。
+### Do subagent tasks inherit the current selection?
 
-## 第一次使用
+No. State is stored under each session ID. A subagent task does not inherit the parent task's current selection. If a default preset is configured, the subagent session can initialize from that default as its own selection.
 
-1. 打开 Codex 并进入一个任务。
-2. 等待右下角出现 `Silly codex` 伴随窗。
-3. 在“配置预设”里选择一个预设，或直接打开单条指令。
-4. 提交下一条普通消息，Hook 会读取当前任务的启用列表并注入对应 Markdown 正文。
-5. 需要专注编辑区时，点击右上角折叠按钮，保留悬浮球入口。
-6. 点击“设置”，在同一窗口中管理指令库、配置预设、界面语言、主题和数据目录。
+### Is Windows required?
 
-首次运行会参考 Windows 界面语言。语言和主题选择保存在窗口偏好中；切换界面语言会保留用户已有的指令名称、预设名称和 Markdown 正文。中英文新安装使用同一组六条默认正文，只切换显示名称。
+Windows 10/11 is required for the WinForms companion, floating button, and tray menu. On other systems, the companion is skipped. The Node.js Hook and `/choose` control path remain available where the Codex plugin and Hook environment are supported.
 
-### 一个具体例子
+### Where is my data stored?
 
-你可以在一个任务里启用偏向直接执行和清晰沟通的指令，在另一个任务里保留不同组合。两个任务的开关和顺序分别保存，任务之间互不覆盖；常用组合可以随时另存为配置预设。
-
-## 适配环境
-
-| 项目 | 要求 |
-| --- | --- |
-| Codex | 支持插件、`SessionStart`、`UserPromptSubmit` Hook 的 Codex 桌面环境 |
-| 操作系统 | Windows 10/11 桌面会话可使用完整伴随窗；需要可交互的前台桌面 |
-| Node.js | 20 或更高版本；Node.js 22 LTS 是 CI 验证版本 |
-| PowerShell | 安装过程只需 PowerShell 执行命令；构建脚本使用 Windows PowerShell 兼容语法 |
-| 其他系统 | Hook 与本地指令库保持 Node.js 逻辑；Windows 伴随窗只在 Windows 上启动 |
-
-完整伴随窗依赖 Windows WinForms 和系统托盘。远程、锁屏或无头桌面会影响窗口展示；`/choose` 命令仍可用于状态控制。
-
-## 数据、隐私与边界
-
-- 配置、指令正文、预设、导入导出文件和任务状态全部写入本机。
-- 伴随窗只连接 Codex 在回环地址提供的调试端口，用于识别当前选中的任务。
-- 项目不包含遥测、广告、远程账户服务和自动上传。
-- 导入、导出和从“设置”打开数据目录都由用户主动触发。
-- 删除插件登记不会自动删除用户库；删除运行目录才会清除本地数据。
-
-默认数据目录：
+The default location is:
 
 ```text
 %CODEX_HOME%\instruction-switcher
 ```
 
-当 `CODEX_HOME` 未设置时，实际目录为：
+When `CODEX_HOME` is unset, this resolves to `%USERPROFILE%\.codex\instruction-switcher`. Set `INSTRUCTION_SWITCHER_HOME` before Codex starts to use another local directory. The Settings window can display and open the active directory.
 
-```text
-%USERPROFILE%\.codex\instruction-switcher
-```
+### Does Silly Codex upload my instructions?
 
-环境变量 `INSTRUCTION_SWITCHER_HOME` 可以指定独立的数据目录。完整说明见 [PRIVACY.md](PRIVACY.md)。
+No automatic upload, telemetry, advertising, or remote account service is included. Task tracking reads the local Codex debugging endpoint and related local state, then writes the result under the plugin data directory. Package files leave the machine only when you share them. See [PRIVACY.md](PRIVACY.md) for the data boundary.
 
-## 升级、卸载与故障排查
+## Contributing
 
-升级：
+Bug reports, documentation fixes, and focused code changes are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the local checks and submission guidelines. Report security issues through the process in [SECURITY.md](SECURITY.md).
 
-```powershell
-codex plugin marketplace upgrade silly-codex
-codex plugin add instruction-switcher@silly-codex
-```
+## License
 
-卸载：
+The repository source, tests, documentation, build scripts, and bundled starter instructions are available under the [Apache License 2.0](LICENSE). Content you create in your local instruction library remains under your control. Third-party acknowledgements are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-```powershell
-codex plugin remove instruction-switcher@silly-codex
-```
-
-看不到伴随窗时，可以按下面顺序检查：
-
-1. 确认 Node.js 位于 PATH：`node --version`。
-2. 在 Codex 插件设置中确认两个 Hook 已审核并启用。
-3. 完全退出 Codex，再重新打开一个任务。
-4. 查看系统托盘里的 `Silly codex` 图标，选择“显示面板”或“显示悬浮球”。
-5. 临时使用 `/choose status` 检查 Hook 是否能读取任务状态。
-
-## 开发与验证
-
-仓库保持零 npm 运行时依赖。Node 测试使用内置 `node:test`，Windows 伴随窗使用系统 .NET Framework C# 编译器。
-
-```powershell
-node --test plugins/instruction-switcher/tests/*.test.mjs
-npm pack --dry-run --json
-powershell -NoProfile -File plugins/instruction-switcher/scripts/build-companion.ps1
-powershell -NoProfile -File plugins/instruction-switcher/tests/companion-lifecycle.test.ps1
-powershell -NoProfile -File plugins/instruction-switcher/tests/window-presentation.test.ps1
-powershell -NoProfile -File plugins/instruction-switcher/tests/library-package.test.ps1
-powershell -NoProfile -File plugins/instruction-switcher/tests/theme-transition-layer.test.ps1
-node scripts/validate-plugin.mjs
-```
-
-GitHub Actions 会执行 Node 测试、Windows 构建、插件结构校验和敏感信息扫描。发布流程不会生成额外的自定义插件 ZIP；GitHub Release 使用源码归档并附带经过校验的 Windows EXE、许可证和 NOTICE 文件。
-
-## 发布状态
-
-当前公开安装 ref 为 `main`。SignPath Foundation 的签名配置完成后，维护者会创建 `v0.1.0` Release，并将经过 Authenticode 校验的伴随窗 EXE 附加到 Release 页面。签名策略和所需配置见 [CODE_SIGNING_POLICY.md](CODE_SIGNING_POLICY.md)。
-
-## 仓库结构
-
-```text
-Silly-codex/
-├─ plugins/instruction-switcher/   # Hook、伴随窗、默认指令、测试
-├─ scripts/                        # GitHub-backed npx 安装器与校验器
-├─ .github/workflows/              # CI、Windows 构建、发布与扫描
-├─ docs/assets/                    # README 运行截图与 GIF
-├─ LICENSE                         # Apache License 2.0
-└─ PRIVACY.md                      # 本地数据处理说明
-```
-
-## 许可证与作者
-
-源代码、测试、文档、构建脚本和随包默认指令内容按 [Apache License 2.0](LICENSE) 发布。
-
-作者：[@foryourhealth111-pixel](https://github.com/foryourhealth111-pixel)。Codex 与 OpenAI 是其各自所有者的商标，本项目保持独立运行和发布。
-
-安全问题请参阅 [SECURITY.md](SECURITY.md)，贡献流程请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)，签名流程请参阅 [CODE_SIGNING_POLICY.md](CODE_SIGNING_POLICY.md)。
+Silly Codex is an independent project by [@foryourhealth111-pixel](https://github.com/foryourhealth111-pixel). Codex and OpenAI are trademarks of their respective owners.

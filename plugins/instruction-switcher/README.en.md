@@ -4,7 +4,7 @@
 
 Instruction Switcher uses `SessionStart` and `UserPromptSubmit` Hooks to keep an independent instruction selection for every task. A Windows companion provides the visible controls.
 
-English documentation: [Root English README](../../README.en.md)  |  Chinese: [README.md](README.md)
+English documentation: [Root English README](../../README.md)  |  Chinese: [README.md](README.md)
 
 <div align="center">
 
@@ -40,7 +40,7 @@ To migrate from `instruction-switcher@personal`, fully exit Codex and run:
 npx --yes github:foryourhealth111-pixel/Silly-codex --replace-personal
 ```
 
-The migration keeps `%CODEX_HOME%\\instruction-switcher` data. Upgrade and uninstall commands are documented in the [root English README](../../README.en.md).
+The migration keeps `%CODEX_HOME%\instruction-switcher` data. Product documentation is available in the [root English README](../../README.md).
 
 ## Companion Window
 
@@ -90,12 +90,12 @@ New installations receive six editable default instructions and no bundled prese
 ## Development
 
 ```powershell
-powershell -NoProfile -File scripts/build-companion.ps1
-node --test tests/*.test.mjs
-powershell -NoProfile -File tests/companion-lifecycle.test.ps1
-powershell -NoProfile -File tests/window-presentation.test.ps1
-powershell -NoProfile -File tests/library-package.test.ps1
-powershell -NoProfile -File tests/theme-transition-layer.test.ps1
+powershell -NoProfile -File plugins/instruction-switcher/scripts/build-companion.ps1
+node --test plugins/instruction-switcher/tests/*.test.mjs
+powershell -NoProfile -File plugins/instruction-switcher/tests/companion-lifecycle.test.ps1
+powershell -NoProfile -File plugins/instruction-switcher/tests/window-presentation.test.ps1
+powershell -NoProfile -File plugins/instruction-switcher/tests/library-package.test.ps1
+powershell -NoProfile -File plugins/instruction-switcher/tests/theme-transition-layer.test.ps1
 ```
 
 The plugin is released under [Apache License 2.0](LICENSE). Author: `foryourhealth111-pixel`.

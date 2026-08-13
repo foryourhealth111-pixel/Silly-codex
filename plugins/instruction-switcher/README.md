@@ -1,6 +1,6 @@
 # Instruction Switcher
 
-English version: [README.en.md](README.en.md)  ·  [Root English README](../../README.en.md)
+English version: [README.en.md](README.en.md)  ·  [Root English README](../../README.md)
 
 > 把每个 Codex 任务的工作方式变成可见、可切换、可恢复的本地控制。
 
@@ -15,13 +15,13 @@ English version: [README.en.md](README.en.md)  ·  [Root English README](../../R
 
 </div>
 
-完整的产品介绍、运行示意、设计意义和安装路线见仓库根目录的 [Silly-codex README](../../README.md)。
+完整的产品介绍、运行示意和安装路线见仓库根目录的 [Silly Codex 中文 README](../../README.zh-CN.md)。
 
 发布仓库：[foryourhealth111-pixel/Silly-codex](https://github.com/foryourhealth111-pixel/Silly-codex)。插件版本以 `.codex-plugin/plugin.json` 为准，当前版本为 `0.1.0`。
 
 ## 安装
 
-在安装前确认 Windows 主机可以调用 Node.js 22 或兼容的 Node.js LTS。伴随窗面向 Windows；Hook 由 Codex 调用。
+在安装前确认 Windows 主机可以调用 Node.js 20 或更高版本。伴随窗面向 Windows；Hook 由 Codex 调用。
 
 从 GitHub 通过 npm 自带的 `npx` 一条命令安装：
 
@@ -142,13 +142,13 @@ Codex 主窗口关闭约 15 秒后，伴随窗会自行退出；残留的 Electr
 ## 验证
 
 ```text
-powershell -NoProfile -File scripts/build-companion.ps1
-node --test tests/*.test.mjs
-powershell -NoProfile -File tests/companion-lifecycle.test.ps1
-powershell -NoProfile -File tests/window-presentation.test.ps1
-powershell -NoProfile -File tests/library-package.test.ps1
-powershell -NoProfile -File tests/theme-transition-layer.test.ps1
-pwsh -NoProfile -File tests/focus-regression.ps1
+powershell -NoProfile -File plugins/instruction-switcher/scripts/build-companion.ps1
+node --test plugins/instruction-switcher/tests/*.test.mjs
+powershell -NoProfile -File plugins/instruction-switcher/tests/companion-lifecycle.test.ps1
+powershell -NoProfile -File plugins/instruction-switcher/tests/window-presentation.test.ps1
+powershell -NoProfile -File plugins/instruction-switcher/tests/library-package.test.ps1
+powershell -NoProfile -File plugins/instruction-switcher/tests/theme-transition-layer.test.ps1
+pwsh -NoProfile -File plugins/instruction-switcher/tests/focus-regression.ps1
 ```
 
 焦点回归会向原生输入框发送合成键盘消息，需要在可交互的 Windows 桌面会话中运行。限制输入注入的远程或无头环境只能核验窗口与焦点状态。
