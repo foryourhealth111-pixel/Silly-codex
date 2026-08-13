@@ -231,3 +231,7 @@ Bug reports, documentation fixes, and focused code changes are welcome. See [CON
 The repository source, tests, documentation, build scripts, and bundled starter instructions are available under the [Apache License 2.0](LICENSE). Content you create in your local instruction library remains under your control. Third-party acknowledgements are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 Silly Codex is an independent project by [@foryourhealth111-pixel](https://github.com/foryourhealth111-pixel). Codex and OpenAI are trademarks of their respective owners.
+
+## Acknowledgements
+
+Thanks to the [Linux.do](https://linux.do/) community for its support.

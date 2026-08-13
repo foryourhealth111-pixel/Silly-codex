@@ -231,3 +231,7 @@ WinForms 伴随窗、悬浮球和托盘菜单需要 Windows 10/11。其他系统
 仓库中的源代码、测试、文档、构建脚本和随包初始指令采用 [Apache License 2.0](LICENSE)。你在本地指令库中创作的内容仍由你自行管理。第三方说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 Silly Codex 是 [@foryourhealth111-pixel](https://github.com/foryourhealth111-pixel) 维护的独立项目。Codex 和 OpenAI 是其各自所有者的商标。
+
+## 致谢
+
+感谢 [Linux.do](https://linux.do/) 社区的支持。
